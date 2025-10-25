@@ -1,0 +1,36 @@
+<header class="site-header">
+  <a href="{% url 'home' %}" class="header-logo">
+    <div class="site-left">
+      <svg viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" stroke="var(--accent)" stroke-width="2" fill="none"/>
+        <path d="M12 6 L12 12 L16 14" stroke="var(--accent)" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </svg>
+      <strong>{{ website_name }}</strong>
+    </div>
+  </a>
+
+  {% if user.is_authenticated %}
+  <nav id="mainNav">
+    <a id="navMain" class="" href="{% url 'repacking-records' %}">Записи конференций</a>
+    <a id="navDownloads" class="" href="{% url 'repacking-downloads' %}">Ссылки для скачивания</a>
+  </nav>
+  {% endif %}
+
+  <div class="group-header-icons">
+    <button class="menu-toggle" id="menuToggle" aria-label="Меню">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="site-right user-icon">
+      <button class="theme-toggle-header" id="themeToggle" title="Сменить тему">🌙</button>
+
+      {% if user.is_authenticated %}
+      <a href="{% url 'profile' %}" class="user-icon">
+        <svg viewBox="0 0 24 24" id="profile">
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M4 20c0-4 4-6 8-6s8 2 8 6"/>
+        </svg>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</header>

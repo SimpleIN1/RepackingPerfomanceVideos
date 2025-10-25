@@ -1,0 +1,433 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}Записи конеференций — {{ website_name }}{% endblock %}
+
+{% block extrastyle %}
+    .loading-spinner-layout {
+      position: absolute;
+      right: 50%;
+      top: 50%;
+    }
+    .spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-left-color: var(--accent);
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+{% endblock %}
+
+
+{% block stylesheet %}
+<link rel="stylesheet" href="{% static 'assets/css/repacking-records.css' %}" type="text/css">
+<script src="{% static 'assets/js/repacking-records.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+  <div class="app" role="application">
+    <header class="app-content">
+      <h1>Выбор комнаты и записей заседаний</h1>
+      <div class="help">Поддерживается выделение Shift / Ctrl(⌘) и фильтр по дате</div>
+    </header>
+
+    <section id="pageMain" class="main-page">
+        <div class="layout">
+          <aside class="rooms" aria-label="Список комнат">
+            <strong>Комнаты</strong>
+            <input type="text" id="roomSearch" placeholder="Поиск комнаты..." style="">
+            <div id="loading-spinner" style="display: none;" class="loading-spinner-layout">
+              <!-- Your spinner animation goes here (e.g., a CSS spinner, SVG, or GIF) -->
+              <div class="spinner"></div>
+            </div>
+            <ul class="rooms-list-12" id="roomsList"></ul>
+          </aside>
+
+          <main class="panel">
+            <div class="controls">
+              <div>
+                <label for="fromDate">С: </label>
+                <input type="date" id="fromDate">
+              </div>
+              <div>
+                <label for="toDate">По: </label>
+                <input type="date" id="toDate">
+              </div>
+
+              <button class="btn" id="filterBtn">Применить</button>
+              <button class="btn ghost" id="clearFilterBtn">Сброс фильтра</button>
+
+              <div class="status-dropdown" id="statusDropdown">
+                <button class="status-btn" id="statusButton">Все статусы ▾</button>
+                <div class="status-menu" id="statusMenu">
+                  {% for status in status_list %}
+                    <label><input type="checkbox" value="{{ status.0 }}" data-text="{{ status.1 }}" checked> {{ status.1 }}</label>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <div>
+                <select id="sortOrder">
+                  <option value="desc">Сначала новые</option>
+                  <option value="asc">Сначала старые</option>
+                </select>
+              </div>
+              <div style="flex:1"></div>
+              <div style="display:flex;gap:8px;align-items:center">
+                <div class="meta">Выбрано: <span id="selectedCount">0</span></div>
+              </div>
+            </div>
+
+            <div id="loading-spinner1" style="display: none;" class="loading-spinner-layout">
+              <!-- Your spinner animation goes here (e.g., a CSS spinner, SVG, or GIF) -->
+              <div class="spinner"></div>
+            </div>
+
+            <div class="list-12" id="recordsList">
+            </div>
+            <div class="actions">
+              <form id="processIDForm" method="POST" action="{% url 'repacking-api-process-records' %}">
+                {% csrf_token %}
+                <button class="btn" id="processBtn" type="submit">Обработать выбранные</button>
+              </form>
+
+              <button class="btn ghost" id="selectAllBtn">Выбрать всё</button>
+              <button class="btn ghost" id="deselectAllBtn">Снять выделение</button>
+            </div>
+          </main>
+        </div>
+      </section>
+  </div>
+
+  <script>
+    const data = {
+      rooms: [],
+      records: {}
+    }
+    const stateRecord = {
+       1: ["var(--state-draft)", "Не обработана"],
+       2: ["var(--state-pending)", "Ожидает"],
+       3: ["var(--state-processing)", "Обрабатывается"],
+       4: ["var(--state-continued)", "Завершена"],
+       5: ["var(--state-success)", "Загружена"],
+       6: ["red", "Неудачно"],
+    }
+
+    let activeRoom=null, visibleRecords=[], selectedIds=new Set(), lastClickedIndex=null;
+
+    const roomsList = document.getElementById('roomsList');
+    const recordsList = document.getElementById('recordsList');
+    const selectedCount = document.getElementById('selectedCount');
+    const dropdown=document.getElementById('statusDropdown');
+    const button=document.getElementById('statusButton');
+    const menu=document.getElementById('statusMenu');
+
+    const fromDate = document.getElementById('fromDate');
+    const toDate = document.getElementById('toDate');
+
+    function init() {
+        sendRequestRooms()
+        resetStatusDropDownToChecked()
+    }
+    function resetStatusDropDownToChecked(){
+      menu.querySelectorAll('input').forEach(item => { item.checked=false;})
+      button.textContent='Нет статусов ▾'
+    }
+
+    function updateStatusButton(){
+      const checked=Array.from(menu.querySelectorAll('input:checked')).map(cb=>cb.dataset.text);
+      if(checked.length===0) button.textContent='Нет статусов ▾';
+      else if(checked.length===6) button.textContent='Все статусы ▾';
+      else button.textContent=checked.join(', ')+' ▾';
+    }
+
+    button.onclick=()=>dropdown.classList.toggle('open');
+    document.addEventListener('click',e=>{
+      if(!dropdown.contains(e.target)) dropdown.classList.remove('open');
+    });
+
+    menu.querySelectorAll('input').forEach(cb=>cb.addEventListener('change',updateStatusButton));
+
+    function renderRooms() {
+        roomsList.innerHTML = '';
+        data.rooms.forEach(r => {
+            const li = document.createElement('li');
+            li.className = 'room-item';
+            li.tabIndex = 0;
+            li.textContent = r.name;
+            li.dataset.id = r.id;
+            li.onclick = () => setActiveRoom(r.id);
+            roomsList.appendChild(li);
+        });
+    }
+
+    document.getElementById('roomSearch').addEventListener('input', e => {
+      const q = e.target.value.toLowerCase();
+      Array.from(roomsList.children).forEach(li => {
+        li.style.display = li.textContent.toLowerCase().includes(q) ? '' : 'none';
+      });
+    });
+
+    function setActiveRoom(id) {
+        activeRoom = id;
+
+        Array.from(roomsList.children).forEach(li => {
+          li.classList.toggle('active', li.dataset.id === id)
+        });
+        sendRequestRecordings(id);
+    }
+
+    function applyFilter(){
+      const from = fromDate.value ? new Date(fromDate.value) : null;
+      const to = toDate.value ? new Date(toDate.value) : null;
+      const selectedStatuses=Array.from(menu.querySelectorAll('input:checked')).map(cb=>parseInt(cb.value));
+      const sortOrder = document.getElementById('sortOrder').value;
+      const all = data.records[activeRoom] || [];
+
+      visibleRecords = all.filter(r=>{
+        const d = new Date(r.dateUTC + 'T' + r.time);
+        if(from && d < from) return false;
+        if(to && d > to) return false;
+        if(selectedStatuses.length&&!selectedStatuses.includes(r.status))return false;
+        return true;
+      });
+
+      visibleRecords.sort((a, b) => {
+        const da = new Date(a.dateUTC + 'T' + a.time);
+        const db = new Date(b.dateUTC + 'T' + b.time);
+        return sortOrder === 'asc' ? da - db : db - da;
+      });
+
+      selectedIds = new Set(Array.from(selectedIds).filter(id=>visibleRecords.some(r=>r.id===id)));
+      renderRecords();
+      updateSelectedCount();
+    }
+
+    function renderRecords() {
+        recordsList.innerHTML = '';
+
+        if (!visibleRecords.length) {
+            recordsList.innerHTML = '<div class="meta">Записей не найдено.</div>';
+            return;
+        }
+
+        visibleRecords.forEach((rec, idx) => {
+            const el = document.createElement('div');
+            el.className = 'item' + (selectedIds.has(rec.id) ? ' selected' : '');
+            el.dataset.index = idx;
+            el.dataset.id = rec.id;
+
+            el.innerHTML = `
+              <input type="checkbox" class="record-input" ${selectedIds.has(rec.id)?'checked':''} style="pointer-events:none">
+              <div style="flex:1">
+                <div><strong><a href="${rec.url}" class="url-link" target="_blank" rel="noopener">${rec.title}</a></strong></div>
+                <div class="meta">Дата: ${rec.date} · Время: ${rec.time} · Длительность: ${rec.duration}</div>
+                <div class="meta">Статус:
+                  <span style="color:${stateRecord[rec.status][0]}">${stateRecord[rec.status][1]}</span>
+                </div>
+              </div>`;
+
+            el.onclick = e => handleItemClick(e, idx);
+            recordsList.appendChild(el);
+        });
+    }
+    function isMobileUserAgent() {
+        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+        return /(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|rim)|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i.test(userAgent) || /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(d|on)|aq(io|pr)|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|av(on|ad)|bada|bigo|blackberry|blu(ec|ar|ip|pk|ug)|brand(er|nd)|bumb|bw\-(n|u)|c559|capi|ccwa|cdm\-|cell|chtm|cime|city|cl(ad|iz)|cm(f|v)|crah|d\-g|dalg|dhpt|dp(ho|st)|ds(12|\-d)|el(at|te)|ev(co|ig)|ez(ze|to)|fl(ch|on)|g1 u|g560|g707|gc\-l|gekk|gf5g|ghko|gim|gr(kg|kl)|gsf|h(th|en|te)|haie|hcit|hd(m|p|t)|hei\-|hi(pt|ad)|hots|hp(i|ip)|hsar|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|5)|50|c\-|e\-|v\-|w\-|x\-)|lh(w|st)|lenovo|lhr |li(st|nd)|limo|lk(t|v)|ly(to|on)|mobi|mq(01|p|t)|mr(f|mr)|ms(ca|de)|mu(ti|nf)|n(at|lg)|nbp1|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|nv)|palm|pant|pdxg|pg(13|\-x|c\-|r\-|to)|phil|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|on)|s55\/|sa(ge|ma|mm|pn|to)|sb(cr|me)|sc(04|oa|ve)|sd(c4|ce|c9|ht|t\-)|se(c(\-|0|1)|47|mc|is)|sf(gm|lg|md)|sg(ca|ch|ki|mo|ts)|sh(mo|ow)|si(em|vau)|sk(00|ty)|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(bd|ic|me)|sq(17|19|3g|4g|50|60|h\-|t\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(g|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|tm(bl|sh)|to(lk|pt)|tr(ad|er|l )|ts(h|r)|tt(ad|me)|ud(ad|eg)|un(e|v) |up(ax|ba|eg|im|sy|nw)|us(ca|cp)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(userAgent.substr(0, 4));
+    }
+    function selectOneRecord(id, idx) {
+        if (selectedIds.has(id)) selectedIds.delete(id);
+        else selectedIds.add(id);
+        lastClickedIndex = idx;
+    }
+
+    function handleItemClick(e, idx) {
+        const rec = visibleRecords[idx];
+        const id = rec.id;
+        const meta = e.metaKey || e.ctrlKey;
+        const shift = e.shiftKey;
+
+        if (isMobileUserAgent()){
+            selectOneRecord(id, idx);
+        } else if (shift && lastClickedIndex !== null) {
+            const [start, end] = lastClickedIndex < idx ? [lastClickedIndex, idx] : [idx, lastClickedIndex];
+            for (let i = start; i <= end; i++) selectedIds.add(visibleRecords[i].id);
+        } else if (meta) {
+            selectOneRecord(id, idx);
+        } else {
+            selectedIds = new Set([id]);
+            lastClickedIndex = idx;
+        }
+        renderRecords();
+        updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+        selectedCount.textContent = selectedIds.size;
+    }
+
+    function attachButtons() {
+        console.log("attachButtons");
+        document.getElementById('filterBtn').onclick = applyFilter;
+        document.getElementById('clearFilterBtn').onclick = () => {
+            fromDate.value = '';
+            toDate.value = '';
+            resetStatusDropDownToChecked();
+            updateStatusButton();
+            applyFilter();
+        };
+        document.getElementById('selectAllBtn').onclick = () => {
+            visibleRecords.forEach(r => selectedIds.add(r.id));
+            renderRecords();
+            updateSelectedCount();
+        };
+        document.getElementById('deselectAllBtn').onclick = () => {
+            selectedIds.clear();
+            renderRecords();
+            updateSelectedCount();
+        };
+
+        document.getElementById('sortOrder').onchange = applyFilter;
+    }
+
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const loadingSpinner1 = document.getElementById('loading-spinner1');
+
+    menu.querySelectorAll('input').forEach(cb=>cb.onchange=applyFilter);
+
+    init();
+
+
+    function sendRequestRecordings(pk) {
+      let action = "{% url 'repacking-api-records' pk='0' %}".replace('0', pk);
+      loadingSpinner1.style.display = 'block';
+      fetch(action, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json; charset=UTF-8"
+          }
+      }).then(response => response.json())
+      .then(response => {
+
+        if (!response.success) {
+          return
+        }
+        loadingSpinner1.style.display = 'none';
+        const list = [];
+        Array.from(response.recordings).forEach(item => {
+           const iso = new Date(item.datetime_created).toLocaleString("ru").split(', ')
+           const date = iso[0];
+           const time = iso[1].slice(0, 5);
+           const dateUTC = new Date(item.datetime_created).toISOString().split('T')[0]
+           const duration = new Date((new Date(item.datetime_stopped) - new Date(item.datetime_created))).toUTCString().split(' ')[4]
+
+           list.push({
+            id: item.record_id,
+            date:date,
+            dateUTC:dateUTC,
+            time:time,
+            title:`Заседание ${date} ${time}`,
+            duration: duration,
+            size:`${Math.floor(Math.random()*400+100)} МБ`,
+            status: item.status,
+            url: item.url,
+          });
+        });
+        data.records[pk] = list;
+        applyFilter();
+      })
+      .catch(error => {
+          console.log('Error:', error);
+      });
+    }
+
+
+    function sendRequestRooms() {
+      let action = `{% url 'repacking-api-rooms' %}`;
+      loadingSpinner.style.display = 'block';
+      fetch(action, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json; charset=UTF-8"
+          }
+      }).then(response => response.json())
+      .then(response => {
+        if (!response.success) {
+          return
+        }
+        loadingSpinner.style.display = 'none';
+        Array.from(response.rooms).forEach(item => {
+           data.rooms.push({id: item.id.toString(), name: item.name});
+        });
+        renderRooms();
+        attachButtons();
+        setActiveRoom(data.rooms[0].id);
+      })
+      .catch(error => {
+          console.log('Error:', error);
+      });
+    }
+
+
+    document.getElementById('processIDForm').addEventListener('submit', e => {
+      e.preventDefault();
+
+      const form = e.target;
+      const formData = new FormData(form);
+      loadingSpinner1.style.display = 'block';
+
+      const recording_ids = [];
+      const chosen = visibleRecords.filter(r => {
+            return selectedIds.has(r.id) && (parseInt(r.status) == 1 || parseInt(r.status) == 6);
+      });
+
+      Array.from(chosen).forEach(item => {
+        recording_ids.push(item.id);
+      });
+
+      formData.set("recording_ids", recording_ids);
+
+      if (!recording_ids.length) {
+          showAlert('Обработка', 'Не выбраны записи для обработки (выбирайте со статусами "Не обработана", "Неудачно").', 'warning');
+          loadingSpinner1.style.display = 'none';
+          return;
+      }
+
+      fetch(form.action, {
+        method: form.method,
+        body: formData,
+      }).then(response => response.json())
+      .then(response => {
+        if (!response.success) {
+          loadingSpinner1.style.display = 'none';
+          return
+        }
+        loadingSpinner1.style.display = 'none';
+        showAlert('Успешно', 'Запись успешно поставлена в очередь на обработку.', 'success');
+        /*Array.from(response.recording_ids).forEach(item => {
+          visibleRecords.forEach(r => selectedIds.delete(item));
+        });*/
+
+        selectedIds.clear();
+        renderRecords();
+        updateSelectedCount();
+      })
+      .catch(error => {
+          loadingSpinner1.style.display = 'none';
+          showAlert('Ошибка', 'Произошла ошибка попробуйте позже.', 'error');
+          console.log('Error:', error);
+      });
+    });
+
+
+  </script>
+
+{% endblock %}

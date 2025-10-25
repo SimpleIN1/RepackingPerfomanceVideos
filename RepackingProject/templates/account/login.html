@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}Вход — {{ website_name }}{% endblock %}
+
+{% block extrastyle %}
+{% endblock %}
+
+{% block stylesheet %}
+<link rel="stylesheet" type="text/css" href="{% static 'assets/css/login.css' %}">
+{% endblock %}
+
+{% block content %}
+  <div class="auth-layout">
+    <div class="auth-card">
+      <button class="theme-toggle" id="themeToggle" title="Сменить тему">🌙</button>
+
+      <form id="loginForm" method="POST" action="{% url 'login' %}">
+        {% csrf_token %}
+        <h1>Вход в {{website_name}}</h1>
+
+        {% for item in form %}
+          <div class="form-group">
+            <label for="{{ item.id_for_label }}">{{ item.label }}</label>
+            <input
+                    type="{{ item.field.widget.input_type }}"
+                    name="{{item.name}}"
+                    id="{{ item.id_for_label }}"
+                    placeholder="{{item.field.widget.attrs.placeholder}}"
+                    {% if item.errors %}class="invalid-input"{% endif %}
+                    required
+            >
+            <div class="invalid-feedback">
+              {% if item.errors %}
+                {% for error in item.errors %}
+                  {{error}}
+                {% endfor %}
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+
+        {% if form.non_field_errors %}
+          <div class="invalid-feedback d-block">
+              {% for error in form.non_field_errors %}
+                  {{ error }}
+              {% endfor %}
+          </div>
+        {% endif %}
+
+        <button type="submit" class="btn">Войти</button>
+      </form>
+
+      <a href="{% url 'register' %}" class="link">Нет аккаунта? Зарегистрироваться</a>
+      <a href="{% url 'forgot-password' %}" class="link link-forgot-password">Забыли пароль?</a>
+    </div>
+  </div>
+
+{% endblock %}
+

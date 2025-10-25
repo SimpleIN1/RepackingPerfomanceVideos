@@ -1,0 +1,130 @@
+
+.site-left svg {
+  width: 28px;
+  height: 28px;
+  fill: var(--accent);
+}
+
+.site-left {
+    gap: 10px;
+}
+.site-right {
+    gap: 15px;
+}
+
+
+.user-icon svg {
+  width: 28px;
+  height: 28px;
+  fill: var(--muted);
+}
+.user-icon {
+  display: flex;
+  align-items: center;
+}
+
+.profile-active {
+    fill: var(--accent) !important;
+}
+
+
+
+/* Адаптивный Header */
+.site-header {
+  max-width: 1100px;         /* как у .app */
+  margin: 0 auto 0 auto;  /* центрируем */
+  padding: 20px;             /* такие же отступы */
+  background:var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--header-border-solid);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  transition: transform .3s, opacity .3s;
+}
+
+.site-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.menu-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.menu-toggle span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: transform .3s, opacity .3s;
+}
+
+nav {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+nav a {
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 500;
+  cursor: pointer;
+}
+nav a.active {
+  color: var(--accent);
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 2px;
+}
+
+/* 🔹 Мобильная адаптация */
+@media (max-width: 720px) {
+  .menu-toggle { display: flex; }
+  nav {
+    position: absolute;
+    top: 60px;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    background: var(--card);
+    border-top: 1px solid var(--header-border-solid);
+    border-bottom: 1px solid var(--header-border-solid);
+    display: none;
+    text-align: center;
+    padding: 10px 0;
+  }
+  nav.show { display: flex; animation: fadeIn .3s ease; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .menu-toggle.active span:nth-child(1) {
+    transform: rotate(45deg) translateY(7px);
+  }
+  .menu-toggle.active span:nth-child(2) {
+    opacity: 0;
+  }
+  .menu-toggle.active span:nth-child(3) {
+    transform: rotate(-45deg) translateY(-7px);
+  }
+}
+
+.group-header-icons {
+    display: flex;
+    flex-direction: row-reverse;
+    gap: 15px;
+}
+

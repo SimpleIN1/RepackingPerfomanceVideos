@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}Профиль — {{ website_name }}{% endblock %}
+
+
+{% block stylesheet %}
+  <link rel="stylesheet" href="{% static 'assets/css/profile.css' %}">
+{% endblock %}
+
+{% block content %}
+  <div class="profile-layout">
+    <div class="profile-card">
+
+      <h1>Профиль пользователя</h1>
+
+      <!-- Информация -->
+      <section>
+        <h2>Основная информация</h2>
+        <form id="profileForm" method="POST" action="{% url 'base-info-profile' %}">
+          {% csrf_token %}
+
+          {% for item in baseInfoProfileForm %}
+            <div class="form-group">
+              <label for="{{ item.id_for_label }}">{{ item.label }}</label>
+              <input
+                  type="{{ item.field.widget.input_type }}"
+                  name="{{item.name}}"
+                  id="{{ item.id_for_label }}"
+                  placeholder="{{item.field.widget.attrs.placeholder}}"
+                  value="{% if item.field.widget.input_type != 'password' %}{{item.value|default_if_none:''}}{% else %}{% endif %}"
+                  {% if item.errors %}class="invalid-input"{% endif %}
+              >
+              <div class="invalid-feedback">
+                {% if item.errors %}
+                  {% for error in item.errors %}
+                    {{error}}
+                  {% endfor %}
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+
+          {% if form.non_field_errors %}
+            <div class="invalid-feedback d-block">
+                {% for error in form.non_field_errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+          {% endif %}
+
+          <button type="submit" class="btn">💾 Сохранить</button>
+        </form>
+      </section>
+
+      <!-- Пароль -->
+      <section>
+        <h2>Сменить пароль</h2>
+        <form id="passwordForm" method="POST" action="{% url 'change-password-profile' %}">
+          {% csrf_token %}
+
+          {% for item in changePasswordProfileForm %}
+            <div class="form-group">
+              <label for="{{ item.id_for_label }}">{{ item.label }}</label>
+              <input
+                  type="{{ item.field.widget.input_type }}"
+                  name="{{item.name}}"
+                  id="{{ item.id_for_label }}"
+                  placeholder="{{item.field.widget.attrs.placeholder}}"
+                  value="{% if item.field.widget.input_type != 'password' %}{{item.value|default_if_none:''}}{% else %}{% endif %}"
+                  {% if item.errors %}class="invalid-input"{% endif %}
+                  required
+              >
+              <div class="invalid-feedback">
+                {% if item.errors %}
+                  {% for error in item.errors %}
+                    {{error}}
+                  {% endfor %}
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+
+          {% if form.non_field_errors %}
+            <div class="invalid-feedback d-block">
+                {% for error in form.non_field_errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+          {% endif %}
+
+
+          <button type="submit" class="btn">🔐 Обновить пароль</button>
+        </form>
+      </section>
+
+      <!-- Безопасность -->
+      <section>
+        <h2>Безопасность</h2>
+
+        <form id="securityForm" method="POST" action="{% url 'security-profile' %}">
+          {% csrf_token %}
+          {% for item in security2FAProfileForm %}
+            <div class="switch-box">
+              <span>{{ item.label }}</span>
+              <label class="switch">
+                <input
+                  type="{{ item.field.widget.input_type }}"
+                  name="{{item.name}}"
+                  {% if item.value %}checked=""{% endif %}
+                  id="{{ item.id_for_label }}"
+                >
+                <span class="slider"></span>
+              </label>
+
+              <div class="invalid-feedback d-none">
+                {% if item.errors %}
+                  {% for error in item.errors %}
+                    {{error}}
+                  {% endfor %}
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+
+          {% if form.non_field_errors %}
+            <div class="invalid-feedback d-block">
+                {% for error in form.non_field_errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+          {% endif %}
+
+          <button type="submit" class="btn">💾 Сохранить</button>
+
+        </form>
+
+      </section>
+
+      <a href="{% url 'logout' %}" class="link">🚪 Выйти из аккаунта</a>
+    </div>
+  </div>
+
+  <script>
+    const toggle2FA = document.getElementById('toggle2FA');
+    const qrBlock = document.getElementById('qrBlock');
+    const qrCode = document.getElementById('qrCode');
+    const confirm2FA = document.getElementById('confirm2FA');
+    let changeEmail = false;
+  </script>
+
+  <script src="{% static '/assets/js/profile.js' %}"></script>
+
+{% endblock %}
+

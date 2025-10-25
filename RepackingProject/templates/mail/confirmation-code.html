@@ -1,0 +1,33 @@
+{% extends 'mail/base-mail.html' %}
+
+{% block visiblemailtext %}Ваш код подтверждения от {{ website_name }}: {{code}} — действует {{expiration_minutes}} минут.{% endblock %}
+{% block title %}Код подтверждения{% endblock %}
+{% block headertitle %}Код подтверждения{% endblock %}
+
+{% block content %}
+  <h1 style="margin:0 0 12px 0;font-size:20px;color:#0b1220;">Ваш код подтверждения</h1>
+  <p style="margin:0 0 18px 0;color:#39424a;line-height:1.5;">
+    Спасибо, что используете сервис <strong>{{website_name}}</strong>. Чтобы продолжить действие, введите код подтверждения ниже. Код действителен в течение <strong>{{expiration_minutes}} минут</strong>.
+  </p>
+
+  <div style="margin:20px 0 18px 0;text-align:center;">
+    <div class="code" style="display:inline-block;padding:18px 28px;border-radius:12px;background:#f7fafc;border:1px solid #e6eef6;font-size:32px;letter-spacing:8px;font-weight:700;color:#0b1220;">
+      {{code}}
+    </div>
+  </div>
+
+  <p style="margin:0 0 18px 0;color:#39424a;line-height:1.5;">
+    Если вы не запрашивали этот код, проигнорируйте это письмо. Ни при каких условиях не сообщайте код третьим лицам.
+  </p>
+
+  <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:14px auto 0 auto;">
+    <tr>
+      <td>
+        <a class="btn" href="{{ verify_url }}" style="display:inline-block;padding:12px 20px;border-radius:10px;background:#2563eb;color:#fff;text-decoration:none;font-weight:600;">
+          Подтвердить код
+        </a>
+      </td>
+    </tr>
+  </table>
+{% endblock %}
+

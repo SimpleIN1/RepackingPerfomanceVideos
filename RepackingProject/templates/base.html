@@ -1,0 +1,161 @@
+{% load static %}
+{% load i18n %}
+{% load custom_filters %}
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>{% block title %}{% endblock %}</title>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!--    <link rel="icon" href="{% static 'favicon_2.ico' %}" type="image/x-icon">-->
+<!--    <link rel="shortcut icon" type="image/png" href="{% static 'favicon_1.png' %}"/>-->
+
+    <link rel="stylesheet" type="text/css" href="{% static 'assets/css/styles.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'assets/css/header.css' %}">
+
+    <style>
+        ::-webkit-scrollbar{width:4px;height:8px}
+        ::-webkit-scrollbar-track{background: rgb(64, 65, 65, 0.1);border-radius:10px}
+        ::-webkit-scrollbar-thumb{background: rgb(149, 149, 149, 0.7);border-radius:10px}
+        ::-webkit-scrollbar-thumb:hover{background:rgba(57, 57, 57, 0.7)}
+
+        option{
+          background:var(--card);
+          color: var(--white);
+          padding:8px;
+        }
+        option:hover, option:checked{
+          color: var(--white);
+          border-radius:20px;
+        }
+    {% block extrastyle %}{% endblock %}
+    </style>
+
+    {% block stylesheet %}{% endblock %}
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+    {% block head_meta %}{% endblock %}
+</head>
+<body data-theme="dark">
+
+    {% if user.is_authenticated %}
+        {% include "header.html" %}
+    {% endif %}
+    {% block header %}{% endblock %}
+
+    <ul class="messages">
+        {% for message in messages %}
+            {% if "json_data" in message.tags %}
+                {% with json_data=message.message|safe|from_json %}
+                <li class="alert {% if message.tags %}{{ message.tags }}{% endif %}" role="alert">
+                    <div class="alert-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 9v4m0 4h.01M12 5a7 7 0 1 1 0 14a7 7 0 0 1 0 -14z" stroke="none" fill="none"/></svg>
+                    </div>
+                    <div>
+                        <div class="alert-title">{{ json_data.title }}</div>
+                        <div class="alert-text">{{ json_data.message }}</div>
+                    </div>
+                  <button class="close-btn">×</button>
+                </li>
+                {% endwith %}
+            {% endif %}
+        {% endfor %}
+    </ul>
+
+    <div class="container">
+    {% block content%}
+    {% endblock %}
+    </div>
+
+    {% include "footer.html" %}
+
+    <script>
+        var activePage = "{{request.resolver_match.url_name}}";
+
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+
+        function set_theme(theme) {
+            body.setAttribute('data-theme', theme);
+            themeToggle.textContent = theme === 'dark' ? '🌙' : '☀️';
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            let theme = localStorage.getItem('theme')
+            if (!theme)
+                theme = 'light';
+            set_theme(theme);
+
+            if (activePage == "profile") {
+                $("#profile").addClass("profile-active");
+            } else if (activePage == "repacking-records") {
+                $("#navMain").addClass("active");
+            } else if (activePage == "repacking-downloads") {
+                $("#navDownloads").addClass("active");
+            }
+
+            setTimeout(() => hideAlert($(".close-btn")), 5000);
+        });
+
+        // 🌗 Переключение темы
+        themeToggle.addEventListener('click', () => {
+          const currentTheme = body.getAttribute('data-theme');
+          const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+          set_theme(newTheme);
+          localStorage.setItem('theme', newTheme);
+        });
+
+        // адаптивное меню
+        const menuToggle = document.getElementById('menuToggle');
+        const nav = document.getElementById('mainNav');
+
+        if (menuToggle)
+            menuToggle.addEventListener('click', () => {
+              menuToggle.classList.toggle('active');
+              nav.classList.toggle('show');
+            });
+
+    </script>
+    <script>
+    $('input').on("input", function() {
+        $(this).removeClass('invalid-input');
+        $(this).parent().children('.invalid-feedback').text("");
+    })
+
+    function showAlert(title, text, type="info") {
+        let innerHTML = `
+            <li class="alert ${type}" role="alert">
+              <div class="alert-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 9v4m0 4h.01M12 5a7 7 0 1 1 0 14a7 7 0 0 1 0 -14z" stroke="none" fill="none"/></svg>
+              </div>
+              <div>
+                <div class="alert-title">${title}</div>
+                <div class="alert-text">${text}</div>
+              </div>
+              <button class="close-btn">×</button>
+            </li>
+        `
+
+        $(".messages").append(innerHTML);
+
+        $(".close-btn").click(function() {
+            hideAlert(this)
+        })
+
+        setTimeout(() => hideAlert($(".close-btn")), 5000);
+    }
+    $(".close-btn").click(function() {
+        hideAlert(this)
+    })
+    function hideAlert(alert) {
+        $(alert).parent().addClass('hide');
+        setTimeout(() => $(alert).parent().remove(), 500);
+    }
+    </script>
+</body>
+</html>
