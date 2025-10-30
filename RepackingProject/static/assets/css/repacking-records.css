@@ -20,7 +20,7 @@
         margin:8px 0;padding:0;list-style:none;
         overflow: hidden;
         overflow-y: scroll;
-        max-height: 688px;
+     //   max-height: 688px;
     }
     .room-item{padding:10px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:8px}
     .room-item:hover{background:var(--glass)}
@@ -105,6 +105,10 @@
         color:var(--muted);
         border:1px dashed var(--border-solid);
     }
+    .terminate-btn {
+        background: var(--error);
+    }
+    .terminate-btn:hover{background:#771d1d}
 
     .help{font-size:12px;color:var(--muted);margin-top:6px}
 

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import datetime
 from typing import List, Tuple, Dict
 
 import httplib2
@@ -9,28 +8,14 @@ from http import HTTPStatus
 from urllib.parse import urlsplit, parse_qs, urlencode
 from httplib2.error import ServerNotFoundError
 
-from django.conf import settings
-from django.utils import timezone
+from django.db.models import Q
+from django.db import transaction
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 
+from common.manage_datetime import from_timestamp
 from common.checksum import calculate_checksum, add_checksum_to_url
-from RepackingApp.models import TypeMeetingModel, MeetingModel
-
-URL = "https://vcs-3.ict.sbras.ru/bigbluebutton/api/"
-API_CALL = "getRecordings"
-
-
-def from_timestamp(gmp):
-    """
-    Конвертирование из timrstamp формата в формат даты datetime
-    :param gmp:
-    :return:
-    """
-    datetime_tmp = datetime.datetime.fromtimestamp(
-        float(f"{gmp[:-3]}.{gmp[-3:]}"), tz=timezone.utc
-    )
-    return datetime_tmp
+from RepackingApp.models import TypeRecordingModel, RecordingModel, RecordingTaskIdModel
 
 
 def is_xml_element_or_not_none(value) -> bool:
@@ -53,9 +38,7 @@ def is_xml_element_or_none(value) -> bool:
     return value is None or isinstance(value, etree._Element)
 
 
-def parse_xml_type_recording(
-    xml_recording: etree._Element
-) -> TypeMeetingModel | None:
+def parse_xml_type_recording(xml_recording: etree._Element) -> TypeRecordingModel | None:
     """
     Парсинг парсин данных типа конференции
     :param xml_recording:
@@ -67,14 +50,12 @@ def parse_xml_type_recording(
 
     try:
         name = xml_recording.find("name").text
-        return TypeMeetingModel(name=name)
+        return TypeRecordingModel(name=name)
     except AttributeError:
         return None
 
 
-def parse_xml_recording(
-    xml_recording: etree._Element
-) -> MeetingModel | None:
+def parse_xml_recording(xml_recording: etree._Element) -> RecordingModel | None:
     """
     Парсинг парсин данных конференции
     :param xml_recording:
@@ -91,7 +72,7 @@ def parse_xml_recording(
         datetime_created = from_timestamp(xml_recording.find("startTime").text)
         datetime_stopped = from_timestamp(xml_recording.find("endTime").text)
 
-        return MeetingModel(
+        return RecordingModel(
             record_id=record_id,
             meeting_id=meeting_id,
             url=url,
@@ -105,7 +86,7 @@ def parse_xml_recording(
 def parse_xml_recordings(content: str) -> Dict | None:
     """
     Парсинг списка конференций и типов конференций из xml, формируя словарь с объектами
-    MeetingModel, TypeMeetingModel
+    RecordingModel, TypeRecordingModel
     :param content:
     :return:
     """
@@ -174,69 +155,66 @@ def request_recordings(url: str) -> str | None:
     return content
 
 
-def upload_recordings_to_db(data: dict) -> Dict | None:
+def get_recording(recording_id: str) -> RecordingModel | None:
     """
-    Загрузка данных в базу данных
-    :param data:
+    Извлечение записи из базы данных по recording_id
+    :param recording_id:
     :return:
     """
 
-    if data is None:
-        return
-
-    TypeMeetingModel.objects.bulk_create(
-        data["type_recordings"], update_conflicts=True,
-        unique_fields=["name"], update_fields=["name"]
-    )
-
-    for key, recording in data["recordings"]:
-        type_meeting = TypeMeetingModel.objects.get(name=key)
-        recording.type_meeting = type_meeting
-
-    MeetingModel.objects.bulk_create(
-        list(map(lambda x: x[1], data["recordings"])),
-        update_conflicts=True,
-        unique_fields=["record_id", "meeting_id"],
-        update_fields=["record_id", "meeting_id"]
-    )
-
-    return data
+    try:
+        recording = RecordingModel.objects.get(record_id=recording_id)
+        return recording
+    except RecordingModel.DoesNotExist:
+        return None
 
 
-def get_recordings(**kwargs):
+def get_recordings_foreinkey_type_recording(**kwargs) -> List[RecordingModel]:
     """
-    Извлекает из базы данных конференции
+    Извлекает из базы данных конференции с использованием соедения с таблицей type_recording
     :param kwargs:
     :return:
     """
-    queryset = MeetingModel \
+    queryset = RecordingModel \
         .objects \
-        .select_related("type_meeting") \
+        .select_related("type_recording") \
         .filter(**kwargs)
     return queryset
 
 
-def get_recordings_to_dict(fields: list, **filters):
+def get_recordings(filter_query: Q) -> List[RecordingModel]:
+    """
+    Извлекает из базы данных конференции
+    :param filter_query:
+    :return:
+    """
+    queryset = RecordingModel \
+        .objects \
+        .filter(filter_query)
+    return queryset
+
+
+def get_recordings_to_dict(fields: List[str], filter_query: Q):
     """
     Извлекает из базы данных конференции, преобразуя в словарь
     :return:
     """
 
-    queryset = MeetingModel \
+    queryset = RecordingModel \
         .objects \
-        .select_related("type_meeting") \
-        .filter(**filters) \
+        .select_related("type_recording") \
+        .filter(filter_query) \
         .order_by("datetime_created") \
         .values(*fields)
     return queryset
 
 
-def get_type_recordings_to_dict():
+def get_type_recordings_to_dict() -> List[TypeRecordingModel]:
     """
     Извлекает из базы данных типы конференций, преобразуя в словарь
     :return:
     """
-    queryset = TypeMeetingModel \
+    queryset = TypeRecordingModel \
         .objects \
         .order_by("name") \
         .values("id", "name")
@@ -249,7 +227,72 @@ def get_type_recordings(order_by=False):
     :param order_by:
     :return:
     """
-    return TypeMeetingModel.objects.all().order_by("name")
+    return TypeRecordingModel.objects.all().order_by("name")
+
+
+def update_recording_by_record_id(recording_id: str, **data) -> None:
+    """
+    Обновление записи по его recording_id
+    :param recording_id:
+    :param data:
+    :return:
+    """
+    with transaction.atomic():
+        RecordingModel.objects.filter(record_id=recording_id).update(**data)
+
+
+def update_recordings(filter_query: Q, **data) -> None:
+    """
+    Обновление записей
+    :param filter_query:
+    :param data:
+    :return:
+    """
+
+    with transaction.atomic():
+        RecordingModel.objects.filter(filter_query).update(**data)
+
+
+def update_recordings_fields(new_recordings, fields_update: list):
+    """
+
+    :param new_recordings:
+    :param fields_update:
+    :return:
+    """
+    for recording in new_recordings:
+        data = {field: getattr(recording, field) for field in fields_update}
+        RecordingModel.objects.filter(record_id=recording.record_id).update(**data)
+
+
+def upload_recordings_to_db(data: dict) -> Dict | None:
+    """
+    Загрузка данных в базу данных
+    :param data: {
+        "recordings": (tuple(str, RecordingModel)),
+        "type_recordings": [TypeRecordingModel]
+    }
+    :return:
+    """
+
+    if data is None:
+        return
+
+    TypeRecordingModel.objects.bulk_create(
+        data["type_recordings"], update_conflicts=True,
+        unique_fields=["name"], update_fields=["name"]
+    )
+
+    for key, recording in data["recordings"]:
+        type_recording = TypeRecordingModel.objects.get(name=key)
+        recording.type_recording = type_recording
+
+    RecordingModel.objects.bulk_create(
+        list(map(lambda x: x[1], data["recordings"])),
+        update_conflicts=True, unique_fields=["record_id"], update_fields=["record_id"]
+    )
+
+    return data
 
 
 def upload_from_source(resource):
@@ -257,7 +300,6 @@ def upload_from_source(resource):
     url = add_checksum_to_url(url)
 
     response = request_recordings(url)
-
     if not response:
         return None
 
@@ -267,12 +309,6 @@ def upload_from_source(resource):
         return None
 
     return upload_recordings_to_db(data)
-
-
-def update_recordings_fields(new_recordings, fields_update: list):
-    for recording in new_recordings:
-        data = {field: getattr(recording, field) for field in fields_update}
-        MeetingModel.objects.filter(record_id=recording.record_id).update(**data)
 
 
 def upload_recordings_and_update_fields() -> None:
@@ -291,4 +327,3 @@ def upload_recordings_and_update_fields() -> None:
 
     recordings = [item[1] for item in data["recordings"]]
     update_recordings_fields(recordings, ["url"])
-

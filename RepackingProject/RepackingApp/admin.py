@@ -1,14 +1,28 @@
 from django.contrib import admin
 
-from RepackingApp.models import TypeMeetingModel, MeetingModel
+from RepackingApp.models import TypeRecordingModel, RecordingModel, RecordingTaskIdModel
 
 
-@admin.register(TypeMeetingModel)
-class TypeMeetingModelAdmin(admin.ModelAdmin):
+@admin.register(TypeRecordingModel)
+class TypeRecordingModelAdmin(admin.ModelAdmin):
     pass
 
 
-@admin.register(MeetingModel)
-class MeetingModelAdmin(admin.ModelAdmin):
-    list_filter = ("type_meeting", )
-    list_display = ("type_meeting", "datetime_created", "datetime_stopped", "status", )
+@admin.action(description="Перевести в статус 'Не обработана'")
+def to_draft_status(modeladmin, request, queryset):
+    queryset.update(status=1)
+
+
+@admin.register(RecordingModel)
+class RecordingModelAdmin(admin.ModelAdmin):
+    list_filter = ("status", "type_recording", )
+    list_display = ("record_id", "meeting_id", "datetime_created", "datetime_stopped", "status", )
+
+    actions = [
+        to_draft_status,
+    ]
+
+
+@admin.register(RecordingTaskIdModel)
+class MeetingTaskIdModelAdmin(admin.ModelAdmin):
+    pass

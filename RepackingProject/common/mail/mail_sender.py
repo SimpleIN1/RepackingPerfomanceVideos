@@ -3,7 +3,7 @@ import logging
 from django.conf import settings
 from django.template.loader import render_to_string
 
-from CeleryApp.tasks import send_mail_use_broker
+from CeleryApp.tasks import send_mail_use_broker_task
 
 
 class SenderEmail:
@@ -23,7 +23,7 @@ class SenderEmail:
         self.context["support_email"] = settings.SUPPORT_EMAIL
 
         html_message = render_to_string(self.template, context=self.context)
-        send_mail_use_broker.delay(
+        send_mail_use_broker_task.delay(
             self.email_addresses,
             self.subject,
             html=html_message,

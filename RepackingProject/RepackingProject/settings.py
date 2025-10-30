@@ -27,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 # Shared secret for BBB APIs
-SHARED_SECRET = os.getenv("SECRET_KEY")
+SHARED_SECRET = os.getenv("SHARED_SECRET")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -131,6 +131,35 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# if DEBUG:
+#     # Logging query language
+#     LOGGING = {
+#         'version': 1,
+#         'disable_existing_loggers': False,
+#         'handlers': {
+#             'console': {
+#                 'class': 'logging.StreamHandler',
+#             },
+#         },
+#         'loggers': {
+#             'django.db.backends': {
+#                 'level': 'DEBUG',
+#                 'handlers': ['console'],
+#             }
+#         },
+#     }
+
+# Session settings
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+
+# Caches
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": os.getenv('CACHE_REDIS', "redis://localhost:6379/0"),
+    }
+}
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
@@ -168,6 +197,11 @@ BROKER_TRANSPORT_OPTIONS = {
     'visibility_timeout': 3600
 }
 
+# Redis settings
+REDIS_HOST = "localhost"
+REDIS_PORT = 6379
+REDIS_DB = 2
+
 # Email settings
 EMAIL_HOST = "smtp.mail.ru"
 EMAIL_PORT = 2525
@@ -178,7 +212,7 @@ DEFAULT_FROM_EMAIL = os.getenv("EMAIL_HOST_USER")
 
 EMAIL_SENDER = False
 
-#
+# Site settings
 SCHEMA = "http"
 WEBSITE_NAME = "RepackingVideos"
 DOMAIN = "localhost"
