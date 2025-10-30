@@ -12,10 +12,10 @@
 **/static/assets/images
 **/static/assets/css/style.css
 **/media/
-main.py
-mainLimitRequest.py
+
 **/*.sqlite3
 
 celerybeat-schedule
 
 .coverage
+**/files/ffmpeg
