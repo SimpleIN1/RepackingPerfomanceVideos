@@ -40,11 +40,13 @@ class RecordingModel(models.Model):
 
 
 class RecordingTaskIdModel(models.Model):
-    recording = models.ForeignKey(RecordingModel, on_delete=models.PROTECT, to_field="record_id")
+    recording = models.ForeignKey(RecordingModel, on_delete=models.PROTECT,
+                                  to_field="record_id")
     task_id = models.CharField(max_length=36,
                                validators=[
                                    MinLengthValidator(36), MaxLengthValidator(36)
                                ])
+    user = models.ForeignKey("AccountApp.UserModel", on_delete=models.PROTECT)
 
     class Meta:
         unique_together = (("recording", "task_id"), )

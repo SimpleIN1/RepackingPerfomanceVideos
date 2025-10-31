@@ -47,7 +47,7 @@ def add_checksum_to_url(url: str, shared_secret: str = None) -> str | None:
     if parse_query.get("checksum"):
         del parse_query["checksum"]
 
-    query = urlencode(parse_query)
+    query = urlencode(parse_query, doseq=True)
 
     if not shared_secret:
         shared_secret = settings.SHARED_SECRET

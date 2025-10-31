@@ -8,6 +8,7 @@ from http import HTTPStatus
 from urllib.parse import urlsplit, parse_qs, urlencode
 from httplib2.error import ServerNotFoundError
 
+from django.conf import settings
 from django.db.models import Q
 from django.db import transaction
 from django.core.exceptions import ValidationError
@@ -83,14 +84,7 @@ def parse_xml_recording(xml_recording: etree._Element) -> RecordingModel | None:
         return None
 
 
-def parse_xml_recordings(content: str) -> Dict | None:
-    """
-    Парсинг списка конференций и типов конференций из xml, формируя словарь с объектами
-    RecordingModel, TypeRecordingModel
-    :param content:
-    :return:
-    """
-
+def to_xml_recording(content: str) -> etree._Element | None:
     if is_xml_element_or_none(content):
         return None
 
@@ -101,6 +95,21 @@ def parse_xml_recordings(content: str) -> Dict | None:
 
     recordings_xml = tree.find("recordings")
 
+    if recordings_xml is None:
+        return None
+
+    return recordings_xml
+
+
+def parse_xml_recordings(content: str) -> Dict | None:
+    """
+    Парсинг списка конференций и типов конференций из xml, формируя словарь с объектами
+    RecordingModel, TypeRecordingModel
+    :param content:
+    :return:
+    """
+
+    recordings_xml = to_xml_recording(content)
     if recordings_xml is None:
         return None
 
@@ -120,6 +129,36 @@ def parse_xml_recordings(content: str) -> Dict | None:
     return {
         "recordings": recordings,
         "type_recordings": type_recordings
+    }
+
+
+def parse_xml_only_recordings_dict(content: str) -> Dict | None:
+    """
+    Парсинг списка конференций и типов конференций из xml, формируя словарь с объектами
+    RecordingModel, TypeRecordingModel
+    :param content:
+    :return:
+    """
+
+    recordings_xml = to_xml_recording(content)
+    if recordings_xml is None:
+        return None
+
+    recordings = {}
+    for index, xml_recording in enumerate(recordings_xml):
+        type_recording = parse_xml_type_recording(xml_recording)
+        recording = parse_xml_recording(xml_recording)
+
+        if not recording:
+            continue
+
+        recordings[recording.record_id] = {
+            "recording": recording,
+            "type_recording": type_recording
+        }
+
+    return {
+        "recordings": recordings
     }
 
 
@@ -327,3 +366,40 @@ def upload_recordings_and_update_fields() -> None:
 
     recordings = [item[1] for item in data["recordings"]]
     update_recordings_fields(recordings, ["url"])
+
+
+def upload_recordings_from_source_without_duplicate(resource):
+    url = settings.BBB_URL.format(resource)
+    url = add_checksum_to_url(url)
+
+    response = request_recordings(url)
+    if not response:
+        return None
+
+    data = parse_xml_only_recordings_dict(response)
+    if not data:
+        return None
+
+    recordings = data.get("recordings")
+    if not recordings:
+        return None
+
+    recordings_db = RecordingModel.objects.all().values("record_id")
+    recordings_ids_db = set(map(lambda x: x["record_id"], recordings_db))
+    recordings_ids = set(recordings.keys())
+    empty_recordings = recordings_ids.difference(recordings_ids_db)
+
+    if not empty_recordings:
+        return None
+
+    creating_data = {
+        "recordings": [],
+        "type_recordings": []
+    }
+
+    for recording_id in empty_recordings:
+        type_recording = recordings[recording_id]["type_recording"]
+        creating_data["recordings"].append((type_recording.name, recordings[recording_id]["recording"]))
+        creating_data["type_recordings"].append(type_recording)
+
+    return upload_recordings_to_db(creating_data)

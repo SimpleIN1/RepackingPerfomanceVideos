@@ -82,7 +82,7 @@ class ProcessRecordingsAPIView(LoginRequiredMixin, View):
 
         recordings = get_recordings(Q(record_id__in=recording_ids))
 
-        if not recordings and False:
+        if not recordings:
             return HttpResponse(
                 json.dumps({
                     "success": False,
@@ -106,7 +106,7 @@ class ProcessRecordingsAPIView(LoginRequiredMixin, View):
                                                    recording_id=recording.record_id)
 
             recording_task_list.append(
-                RecordingTaskIdModel(recording=recording, task_id=task)
+                RecordingTaskIdModel(recording=recording, task_id=task, user=request.user)
             )
 
         create_recording_tasks(recording_task_list)
@@ -147,7 +147,7 @@ class TerminateRecordingsAPIView(LoginRequiredMixin, View):
 
         context["recording_ids"] = form.cleaned_data["recording_ids"].split(',')
 
-        clean_recording_tasks = get_recording_tasks(Q(recording_id__in=context["recording_ids"]))
+        clean_recording_tasks = get_recording_tasks(Q(recording_id__in=context["recording_ids"]) & Q(user=request.user))
         clean_recording_tasks_ids = [
             recording_task.recording_id for recording_task in clean_recording_tasks
         ]

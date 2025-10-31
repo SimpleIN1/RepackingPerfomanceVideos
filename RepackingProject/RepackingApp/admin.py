@@ -24,5 +24,5 @@ class RecordingModelAdmin(admin.ModelAdmin):
 
 
 @admin.register(RecordingTaskIdModel)
-class MeetingTaskIdModelAdmin(admin.ModelAdmin):
-    pass
+class RecordingTaskIdModelAdmin(admin.ModelAdmin):
+    list_display = ("recording", "task_id", "user")

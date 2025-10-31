@@ -26,9 +26,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("SECRET_KEY")
 
-# Shared secret for BBB APIs
-SHARED_SECRET = os.getenv("SHARED_SECRET")
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -187,6 +184,12 @@ else:
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# BBB APIs settings
+SHARED_SECRET = os.getenv("SHARED_SECRET")
+BBB_RESOURCE = "vcs-6.ict.nsc.ru"
+BBB_URL = "https://{0}/bigbluebutton/api/getRecordings?state=published"
 
 # Celery settings
 CELERY_BROKER_URL = "redis://localhost:6379/1"

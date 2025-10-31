@@ -15,8 +15,9 @@ from django.core.mail import send_mail, BadHeaderError
 from django.contrib.sessions.backends.db import SessionStore
 
 from CeleryApp.app import app
+from RepackingApp.models import RecordingModel
 from common.redis_conn import get_redis_connection
-from RepackingApp.services.records import update_recording_by_record_id
+from RepackingApp.services.records import update_recording_by_record_id, upload_recordings_from_source_without_duplicate
 
 
 @app.task
@@ -27,6 +28,15 @@ def send_mail_use_broker_task(
         html: str = None,
         filename: str = None
 ) -> None:
+    """
+    Отправка электронного письма
+    :param email_addresses:
+    :param subject:
+    :param message:
+    :param html:
+    :param filename:
+    :return:
+    """
     logging.info(f"EMAIL {email_addresses}, {subject}")
     if not isinstance(email_addresses, list):
         email_addresses = [email_addresses]
@@ -48,6 +58,14 @@ def send_mail_use_broker_task(
 
 @app.task(bind=True)
 def repack_threads_video_task(self, resource, recording_id):
+    """
+    Перепакова видео через отложенный вызов
+    :param self:
+    :param resource:
+    :param recording_id:
+    :return:
+    """
+
     logging.info(f"Start process {resource}, {recording_id}")
     update_recording_by_record_id(recording_id, status=3)
 
@@ -78,3 +96,19 @@ def repack_threads_video_task(self, resource, recording_id):
     logging.info("CONTINUE")
     update_recording_by_record_id(recording_id, status=4)
     logging.info(f"Stop process {resource}, {recording_id}")
+
+
+@app.task
+def upload_recordings_periodic_task():
+    logging.info("Start uploading recordings periodic task")
+    upload_recordings_from_source_without_duplicate(settings.BBB_RESOURCE)
+    logging.info("Stop uploading recordings periodic task")
+
+
+###  Распределение тасок  между процессами обработки (отправка письма занимается 1 процесс,
+#                                                     обработка видео другой,
+#                                                     и тд.
+#                                                      )
+
+### Загрузка на mydisk.
+### Проверка видео на webm файлов на сервер + подгрузка текстовых сообщений
