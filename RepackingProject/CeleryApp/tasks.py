@@ -105,10 +105,5 @@ def upload_recordings_periodic_task():
     logging.info("Stop uploading recordings periodic task")
 
 
-###  Распределение тасок  между процессами обработки (отправка письма занимается 1 процесс,
-#                                                     обработка видео другой,
-#                                                     и тд.
-#                                                      )
-
 ### Загрузка на mydisk.
 ### подгрузка текстовых сообщений

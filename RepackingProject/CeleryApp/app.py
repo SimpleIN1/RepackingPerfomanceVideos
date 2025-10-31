@@ -20,6 +20,12 @@ app.conf.broker_connection_retry_on_startup = True
 app.conf.task_routes = {
     'CeleryApp.tasks.upload_recordings_periodic_task': {
         'queue': 'common_worker_queue'
+    },
+    'CeleryApp.tasks.send_mail_use_broker_task': {
+        'queue': 'common_worker_queue'
+    },
+    'CeleryApp.tasks.repack_threads_video_task': {
+        'queue': 'ffmpeg_worker_queue'
     }
 }
 
