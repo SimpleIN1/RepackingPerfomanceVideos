@@ -17,6 +17,7 @@ app.autodiscover_tasks(lambda: [n.name for n in apps.get_app_configs()])
 app.conf.broker_connection_retry_on_startup = True
 
 
+# Распеределение задач по очередям
 app.conf.task_routes = {
     'CeleryApp.tasks.upload_recordings_periodic_task': {
         'queue': 'common_worker_queue'

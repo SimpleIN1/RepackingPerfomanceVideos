@@ -1,4 +1,5 @@
 import datetime
+import os
 import subprocess
 import time
 import uuid
@@ -6,6 +7,7 @@ from typing import List
 
 from lxml import etree
 from django.db.models import Q
+from django.conf import settings
 from django.forms.models import model_to_dict
 from django.core.exceptions import ValidationError
 from django.test import TestCase, Client, RequestFactory
@@ -22,6 +24,7 @@ from RepackingApp.services.records import request_recordings, parse_xml_recordin
 from RepackingApp.services.record_task import create_recording_task, delete_recordings_tasks, get_recording_tasks, \
     update_recording_tasks, create_recording_tasks
 from RepackingApp.validators import validate_recording_id
+from common.nextcloud import upload_to_nextcloud, oc
 
 
 class RepackingServiceTests(TestCase):
@@ -223,7 +226,7 @@ class RepackingServiceTests(TestCase):
         upload_recordings_to_db(data)
 
         name = "Информационные технологии в задачах филологии и компьютерной лингвистики"
-        recordings = get_recordings_foreinkey_type_recording(type_recording__name=name)
+        recordings = get_recordings_foreinkey_type_recording(Q(type_recording__name=name))
 
         self.assertEqual(len(recordings), 2)
         self.assertEqual(recordings[0].type_recording.name, name)
@@ -233,7 +236,7 @@ class RepackingServiceTests(TestCase):
         upload_recordings_to_db(data)
 
         pk = 1
-        recordings = get_recordings_foreinkey_type_recording(type_recording__id=pk)
+        recordings = get_recordings_foreinkey_type_recording(Q(type_recording__id=pk))
 
         self.assertEqual(len(recordings), 3)
         self.assertEqual(recordings[0].type_recording.id, pk)
@@ -269,10 +272,10 @@ class RepackingServiceTests(TestCase):
         data = parse_xml_recordings(self.content)
         upload_recordings_to_db(data)
 
-        recordings = get_recordings_foreinkey_type_recording(record_id__in=[
+        recordings = get_recordings_foreinkey_type_recording(Q(record_id__in=[
             "37c8d0e83c429289a34173f15ecc33fe05b2aa96-1676974666046",
             "4d7c4b3f965fc189d9c6cb8ab68b0b07550bfb03-1633423215293"
-        ])
+        ]))
 
         self.assertEqual(len(recordings), 2)
 
@@ -592,3 +595,23 @@ class ProcessRecordingsAPIView(TestCase):
     def setUp(self):
         self.client = Client()
         self.factory = RequestFactory()
+
+
+class NextcloudUploadingTests(TestCase):
+    def test_upload_file(self):
+        source_file = "test.txt"
+        with open(source_file, 'w') as f:
+            f.write("Data "*23)
+
+        remote_file = "test/test.txt"
+        upload_to_nextcloud(remote_file, source_file)
+        os.remove(source_file)
+
+        found = False
+        fs = oc.list(settings.NEXTCLOUD_PATH)
+        for item in fs:
+            if item.name == source_file:
+                found = True
+                break
+
+        self.assertTrue(found)

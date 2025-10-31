@@ -208,7 +208,7 @@ def get_recording(recording_id: str) -> RecordingModel | None:
         return None
 
 
-def get_recordings_foreinkey_type_recording(**kwargs) -> List[RecordingModel]:
+def get_recordings_foreinkey_type_recording(filter_query: Q) -> List[RecordingModel]:
     """
     Извлекает из базы данных конференции с использованием соедения с таблицей type_recording
     :param kwargs:
@@ -217,7 +217,7 @@ def get_recordings_foreinkey_type_recording(**kwargs) -> List[RecordingModel]:
     queryset = RecordingModel \
         .objects \
         .select_related("type_recording") \
-        .filter(**kwargs)
+        .filter(filter_query)
     return queryset
 
 

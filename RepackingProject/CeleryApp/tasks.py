@@ -1,23 +1,18 @@
 from __future__ import annotations
 
-import os
-import time
-import redis
-import random
-import signal
+import datetime
 import logging
 import subprocess
 
 from django.conf import settings
-from django.core.cache import cache
-from celery.contrib import abortable
+from django.db.models import Q
 from django.core.mail import send_mail, BadHeaderError
-from django.contrib.sessions.backends.db import SessionStore
 
 from CeleryApp.app import app
-from RepackingApp.models import RecordingModel
+from common.nextcloud import upload_to_nextcloud
 from common.redis_conn import get_redis_connection
-from RepackingApp.services.records import update_recording_by_record_id, upload_recordings_from_source_without_duplicate
+from RepackingApp.services.records import update_recording_by_record_id, \
+    upload_recordings_from_source_without_duplicate, get_recordings_foreinkey_type_recording
 
 
 @app.task
@@ -68,13 +63,16 @@ def repack_threads_video_task(self, resource, recording_id):
 
     logging.info(f"Start process {resource}, {recording_id}")
     update_recording_by_record_id(recording_id, status=3)
+    recordings = get_recordings_foreinkey_type_recording(Q(record_id=recording_id))
+    fname = f"{recordings[0].datetime_created.strftime('%Y-%m-%dT%H:%M')}.mp4"
+    local_source_file = f"files/ffmpeg/{fname}"
 
     p = subprocess.Popen(
         [
             "./scripts/start-repack-ffmpeg.sh",
             "-r", resource,
             "-i", recording_id,
-            "-o", "files/ffmpeg"
+            "-o", local_source_file
         ],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.STDOUT
@@ -82,7 +80,6 @@ def repack_threads_video_task(self, resource, recording_id):
     logging.info(f"pid: {p.pid}")
     with get_redis_connection() as r:
         r.set(self.request.id, p.pid)
-        logging.info(r.get(self.request.id))
         r.save()
 
     while True:
@@ -93,8 +90,17 @@ def repack_threads_video_task(self, resource, recording_id):
         else:
             break
 
-    logging.info("CONTINUE")
     update_recording_by_record_id(recording_id, status=4)
+
+    logging.info("Start upload to NEXTCLOUD")
+
+    remote_file = f"{recordings[0].type_recording.name}/{fname}"
+    upload_to_nextcloud(remote_file, local_source_file)
+
+    logging.info("Upload successfully")
+
+    update_recording_by_record_id(recording_id, status=5)
+
     logging.info(f"Stop process {resource}, {recording_id}")
 
 
@@ -105,5 +111,6 @@ def upload_recordings_periodic_task():
     logging.info("Stop uploading recordings periodic task")
 
 
-### Загрузка на mydisk.
-### подгрузка текстовых сообщений
+###   возможость скачивания с сервера!?
+###   Загрузка на mydisk.
+###   подгрузка текстовых сообщений (формирование архива с текстовыми сообщениями и видео)

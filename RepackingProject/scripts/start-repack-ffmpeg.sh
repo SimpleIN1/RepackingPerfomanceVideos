@@ -32,7 +32,7 @@ done
 
 
 PREFIX="https://$RESOURCE/presentation/$RECORDING_ID"
-OUT="$OUTPUT_DIR/$RECORDING_ID.mp4"
+OUT="$OUTPUT_DIR"
 
 DESKSHARE="$PREFIX/deskshare/deskshare.webm"
 WEBCAMS="${PREFIX}/video/webcams.webm"

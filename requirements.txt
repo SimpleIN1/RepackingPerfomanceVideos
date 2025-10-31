@@ -9,3 +9,5 @@ django_redis==5.3.0
 httplib2==0.31.0
 python-dotenv==0.21.0
 psutil==7.1.2
+wheel==0.45.1
+pyocclient==0.6
