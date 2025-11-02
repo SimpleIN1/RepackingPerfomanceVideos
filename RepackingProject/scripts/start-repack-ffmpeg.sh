@@ -12,15 +12,15 @@ while [[ $# -gt 0 ]]; do
       shift # past argument
       shift # past value
       ;;
-    -o|--output_dir)
-      OUTPUT_DIR="$2"
+    -o|--output)
+      OUTPUT="$2"
       shift # past argument
       shift # past value
       ;;
   esac
 done
 
-params=("$OUTPUT_DIR" "$RECORDING_ID" "$RESOURCE")
+params=("$OUTPUT" "$RECORDING_ID" "$RESOURCE")
 
 for param in "${params[@]}"; do
   if [ -z "$param" ]
@@ -32,10 +32,15 @@ done
 
 
 PREFIX="https://$RESOURCE/presentation/$RECORDING_ID"
-OUT="$OUTPUT_DIR"
+OUT="$OUTPUT"
 
 DESKSHARE="$PREFIX/deskshare/deskshare.webm"
-WEBCAMS="${PREFIX}/video/webcams.webm"
+WEBCAMS="$PREFIX/video/webcams.webm"
+POPCORN="$PREFIX/slides_new.xml"
+
+
+OUTPUT_DIR=$(dirname "$OUT")
+mkdir -p $OUTPUT_DIR
 
 
 wget_http_code() {
@@ -46,12 +51,18 @@ wget_http_code() {
 
 http_status_webcams=$(wget_http_code "$WEBCAMS")
 http_status_deskshare=$(wget_http_code "$DESKSHARE")
+http_status_popcorn=$(wget_http_code "$POPCORN")
 
 echo "http_status_webcams - $http_status_webcams"
 echo "http_status_deskshare - $http_status_deskshare"
+echo "http_status_popcorn - $http_status_popcorn"
 
 if [[ "$http_status_deskshare" -ne 200 ]]; then
   DESKSHARE="static/white.jpg"
+fi
+
+if [[ "$http_status_popcorn" -eq 200 ]]; then
+  curl "$POPCORN" -o"$OUTPUT_DIR/popcorn.xml"
 fi
 
 

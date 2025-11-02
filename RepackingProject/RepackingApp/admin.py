@@ -5,7 +5,7 @@ from RepackingApp.models import TypeRecordingModel, RecordingModel, RecordingTas
 
 @admin.register(TypeRecordingModel)
 class TypeRecordingModelAdmin(admin.ModelAdmin):
-    pass
+    list_display = ("name", )
 
 
 @admin.action(description="Перевести в статус 'Не обработана'")
@@ -17,7 +17,7 @@ def to_draft_status(modeladmin, request, queryset):
 class RecordingModelAdmin(admin.ModelAdmin):
     list_filter = ("status", "type_recording", )
     list_display = ("record_id", "meeting_id", "datetime_created", "datetime_stopped", "status", )
-
+    search_fields = ("record_id", )
     actions = [
         to_draft_status,
     ]

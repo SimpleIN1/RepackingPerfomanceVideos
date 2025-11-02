@@ -2,10 +2,12 @@ import json
 import os
 import signal
 import redis
+import pytz
 from http import HTTPStatus
 from urllib.parse import urlsplit
 
 from django.db.models import Q
+from django.conf import settings
 from django.shortcuts import render
 from django.core.cache import cache
 from django.http import HttpResponse
@@ -48,7 +50,6 @@ class RecordingsAPIView(LoginRequiredMixin, View):
             fields=["record_id", "datetime_created", "datetime_stopped", "status", "url"],
             filter_query=Q(type_recording__id=pk)
         )
-
         return HttpResponse(
             json.dumps({
                 "success": True,

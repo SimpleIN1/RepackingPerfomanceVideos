@@ -326,7 +326,7 @@
         loadingSpinner1.style.display = 'none';
         const list = [];
         Array.from(response.recordings).forEach(item => {
-           const iso = new Date(item.datetime_created).toLocaleString("ru").split(', ')
+           const iso = new Date(item.datetime_created).toLocaleString("ru", {timeZone: tzString}).split(', ')
            const date = iso[0];
            const time = iso[1].slice(0, 5);
            const dateUTC = new Date(item.datetime_created).toISOString().split('T')[0]

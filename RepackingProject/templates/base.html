@@ -75,6 +75,7 @@
     {% include "footer.html" %}
 
     <script>
+        var tzString = "{{tz_string}}";
         var activePage = "{{request.resolver_match.url_name}}";
 
         const themeToggle = document.getElementById('themeToggle');

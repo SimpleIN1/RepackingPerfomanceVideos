@@ -603,12 +603,12 @@ class NextcloudUploadingTests(TestCase):
         with open(source_file, 'w') as f:
             f.write("Data "*23)
 
-        remote_file = "test/test.txt"
+        remote_file = "test1/test/test.txt"
         upload_to_nextcloud(remote_file, source_file)
         os.remove(source_file)
 
         found = False
-        fs = oc.list(settings.NEXTCLOUD_PATH)
+        fs = oc.list(f"{settings.NEXTCLOUD_PATH}/test1/test/")
         for item in fs:
             if item.name == source_file:
                 found = True

@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 import os
 from pathlib import Path
+
+import pytz
 from dotenv import load_dotenv
 
 
@@ -163,7 +165,8 @@ CACHES = {
 
 LANGUAGE_CODE = 'ru-ru'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Novosibirsk'
+TIME_ZONE_PYTZ = pytz.timezone(TIME_ZONE)
 
 USE_I18N = True
 

@@ -58,25 +58,30 @@ def repack_threads_video_task(self, resource, recording_id):
     :param self:
     :param resource:
     :param recording_id:
-    :return:
+    :return: None
     """
 
     logging.info(f"Start process {resource}, {recording_id}")
     update_recording_by_record_id(recording_id, status=3)
     recordings = get_recordings_foreinkey_type_recording(Q(record_id=recording_id))
-    fname = f"{recordings[0].datetime_created.strftime('%Y-%m-%dT%H:%M')}.mp4"
-    local_source_file = f"files/ffmpeg/{fname}"
+    fname_datetime = recordings[0].datetime_created.astimezone(settings.TIME_ZONE_PYTZ).strftime('%Y-%m-%dT%H:%M')
+    fname = f"{fname_datetime}.mp4"
+    fname_popcorn = f"popcorn.xml"
+
+    local_source_dir = f"files/ffmpeg/{recording_id}"
+    remote_dir = f"{recordings[0].type_recording.name}/{fname_datetime}"
 
     p = subprocess.Popen(
         [
             "./scripts/start-repack-ffmpeg.sh",
             "-r", resource,
             "-i", recording_id,
-            "-o", local_source_file
+            "-o", f"{local_source_dir}/{fname}"
         ],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.STDOUT
     )
+
     logging.info(f"pid: {p.pid}")
     with get_redis_connection() as r:
         r.set(self.request.id, p.pid)
@@ -94,8 +99,12 @@ def repack_threads_video_task(self, resource, recording_id):
 
     logging.info("Start upload to NEXTCLOUD")
 
-    remote_file = f"{recordings[0].type_recording.name}/{fname}"
-    upload_to_nextcloud(remote_file, local_source_file)
+    upload_to_nextcloud(
+        f"{remote_dir}/{fname}", f"{local_source_dir}/{fname}"
+    )
+    upload_to_nextcloud(
+        f"{remote_dir}/chat.xml", f"{local_source_dir}/{fname_popcorn}"
+    )
 
     logging.info("Upload successfully")
 
@@ -112,5 +121,5 @@ def upload_recordings_periodic_task():
 
 
 ###   возможость скачивания с сервера!?
-###   Загрузка на mydisk.
-###   подгрузка текстовых сообщений (формирование архива с текстовыми сообщениями и видео)
+###   кэширование
+###   удаление ненужых файлов
