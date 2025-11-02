@@ -3,6 +3,7 @@ from __future__ import annotations
 import datetime
 import logging
 import subprocess
+import time
 
 from django.conf import settings
 from django.db.models import Q
@@ -69,7 +70,7 @@ def repack_threads_video_task(self, resource, recording_id):
     fname_popcorn = f"popcorn.xml"
 
     local_source_dir = f"files/ffmpeg/{recording_id}"
-    remote_dir = f"{recordings[0].type_recording.name}/{fname_datetime}"
+    remote_dir = f"{recordings[0].type_recording.name}/{fname_datetime}-{str(time.time()).replace('.','')}"
 
     p = subprocess.Popen(
         [
