@@ -3,10 +3,12 @@
 {% load static %}
 
 {% block stylesheet %}
-<link rel="stylesheet" href="{% static 'assets/css/repacking-records.css' %}" type="text/css">
+<link rel="stylesheet" href="{% static 'assets/css/repacking.css' %}" type="text/css">
+<link rel="stylesheet" href="{% static 'assets/css/repacking-downloads.css' %}" type="text/css">
 {% endblock %}
 
 {% block content %}
+
   <div class="app" role="application">
 
     <section id="pageDownloads" class="downloads">
@@ -19,55 +21,6 @@
       </table>
     </section>
 
-    </div>
-
-  <script>
-    const data = {
-      rooms: [
-        {id: 'r1', name: 'Зал №1 — Семинар по AI'},
-        {id: 'r2', name: 'Зал №2 — Кафедра математики'},
-        {id: 'r3', name: 'Конференц-зал — Внешние встречи'},
-      ],
-      records: {
-        r1: generateRecords('2025-01-05', 12, '10:00'),
-        r2: generateRecords('2025-02-10', 9, '14:00'),
-        r3: generateRecords('2025-03-01', 6, '09:30')
-      }
-    }
-
-    function generateRecords(startDate, count, time){
-      const list=[]; let d = new Date(startDate);
-      for(let i=0;i<count;i++){
-        const iso = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString().slice(0,10);
-        list.push({id:`${iso}-${time}-${i}`, date:iso, time:time, title:`Заседание ${iso} ${time}`, duration:'1:30', size:`${Math.floor(Math.random()*400+100)} МБ`, url:`https://example.com/${iso}`});
-        d.setDate(d.getDate()+7);
-      }
-      return list;
-    }
-
-    let activeRoom=null, visibleRecords=[], selectedIds=new Set(), lastClickedIndex=null;
-    const roomsList=document.getElementById('roomsList');
-    const recordsList=document.getElementById('recordsList');
-    const selectedCount=document.getElementById('selectedCount');
-    const fromDate=document.getElementById('fromDate');
-    const toDate=document.getElementById('toDate');
-
-    function init(){ renderRooms(); setActiveRoom(data.rooms[0].id); attachButtons(); }
-    function renderRooms(){ roomsList.innerHTML=''; data.rooms.forEach(r=>{ const li=document.createElement('li'); li.className='room-item'; li.tabIndex=0; li.textContent=r.name; li.dataset.id=r.id; li.onclick=()=>setActiveRoom(r.id); roomsList.appendChild(li); }); }
-    function setActiveRoom(id){ activeRoom=id; Array.from(roomsList.children).forEach(li=>li.classList.toggle('active',li.dataset.id===id)); applyFilter(); }
-    function applyFilter(){ const from=fromDate.value?new Date(fromDate.value):null; const to=toDate.value?new Date(toDate.value):null; const all=data.records[activeRoom]||[]; visibleRecords=all.filter(r=>{const d=new Date(r.date);if(from&&d<from)return false;if(to&&d>to)return false;return true;}); selectedIds=new Set(Array.from(selectedIds).filter(id=>visibleRecords.some(r=>r.id===id))); renderRecords(); updateSelectedCount(); }
-    function renderRecords(){ recordsList.innerHTML=''; if(!visibleRecords.length){recordsList.innerHTML='<div class="meta">Записей не найдено.</div>';return;} visibleRecords.forEach((rec,idx)=>{ const el=document.createElement('div'); el.className='item'+(selectedIds.has(rec.id)?' selected':''); el.dataset.index=idx; el.dataset.id=rec.id; el.innerHTML=`<input type="checkbox" ${selectedIds.has(rec.id)?'checked':''} style="pointer-events:none"><div style="flex:1"><div><strong>${rec.title}</strong></div><div class="meta">Дата: ${rec.date} · Время: ${rec.time} · Длительность: ${rec.duration}</div></div>`; el.onclick=e=>handleItemClick(e,idx); recordsList.appendChild(el); }); }
-    function handleItemClick(e,idx){ const rec=visibleRecords[idx]; const id=rec.id; const meta=e.metaKey||e.ctrlKey; const shift=e.shiftKey; if(shift&&lastClickedIndex!==null){const[start,end]=lastClickedIndex<idx?[lastClickedIndex,idx]:[idx,lastClickedIndex]; for(let i=start;i<=end;i++)selectedIds.add(visibleRecords[i].id);} else if(meta){ if(selectedIds.has(id))selectedIds.delete(id); else selectedIds.add(id); lastClickedIndex=idx;} else{ selectedIds=new Set([id]); lastClickedIndex=idx;} renderRecords(); updateSelectedCount(); }
-    function updateSelectedCount(){ selectedCount.textContent=selectedIds.size; }
-    function attachButtons(){ document.getElementById('filterBtn').onclick=applyFilter; document.getElementById('clearFilterBtn').onclick=()=>{fromDate.value='';toDate.value='';applyFilter();}; document.getElementById('selectAllBtn').onclick=()=>{visibleRecords.forEach(r=>selectedIds.add(r.id));renderRecords();updateSelectedCount();}; document.getElementById('deselectAllBtn').onclick=()=>{selectedIds.clear();renderRecords();updateSelectedCount();}; document.getElementById('processBtn').onclick=processSelected; document.getElementById('navMain').onclick=()=>switchPage('main'); document.getElementById('navDownloads').onclick=()=>switchPage('downloads'); }
-
-    function processSelected(){ if(!selectedIds.size){alert('Не выбраны записи для обработки.');return;} const chosen=visibleRecords.filter(r=>selectedIds.has(r.id)); populateDownloads(chosen); switchPage('downloads'); }
-
-    function populateDownloads(records){ const tbody=document.querySelector('#downloadTable tbody'); tbody.innerHTML=''; records.forEach((r,i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${i+1}</td><td>${r.title}</td><td>${r.date}</td><td>${r.time}</td><td>${r.size}</td><td><a class='btn' href='${r.url}' download>Скачать</a></td>`; tbody.appendChild(tr); }); }
-
-    function switchPage(page){ const main=document.getElementById('pageMain'); const down=document.getElementById('pageDownloads'); const navMain=document.getElementById('navMain'); const navDownloads=document.getElementById('navDownloads'); if(page==='downloads'){main.style.display='none';down.classList.add('active');navMain.classList.remove('active');navDownloads.classList.add('active');} else {main.style.display='block';down.classList.remove('active');navMain.classList.add('active');navDownloads.classList.remove('active');}}
-
-    init();
-  </script>
+  </div>
 
 {% endblock %}

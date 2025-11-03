@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from RepackingApp.models import TypeRecordingModel, RecordingModel, RecordingTaskIdModel
+from RepackingApp.models import TypeRecordingModel, RecordingModel, RecordingTaskIdModel, RecodingFileUserModel
 
 
 @admin.register(TypeRecordingModel)
@@ -26,3 +26,8 @@ class RecordingModelAdmin(admin.ModelAdmin):
 @admin.register(RecordingTaskIdModel)
 class RecordingTaskIdModelAdmin(admin.ModelAdmin):
     list_display = ("recording", "task_id", "user")
+
+
+@admin.register(RecodingFileUserModel)
+class RecodingFileUserModelAdmin(admin.ModelAdmin):
+    list_display = ("recording", "user", "file", "datetime_created")

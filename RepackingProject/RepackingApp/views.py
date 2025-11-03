@@ -104,7 +104,8 @@ class ProcessRecordingsAPIView(LoginRequiredMixin, View):
             resource = urlsplit(recording.url).netloc
 
             task = repack_threads_video_task.delay(resource=resource,
-                                                   recording_id=recording.record_id)
+                                                   recording_id=recording.record_id,
+                                                   user_id=request.user.id)
 
             recording_task_list.append(
                 RecordingTaskIdModel(recording=recording, task_id=task, user=request.user)

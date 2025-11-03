@@ -25,6 +25,9 @@ app.conf.task_routes = {
     'CeleryApp.tasks.send_mail_use_broker_task': {
         'queue': 'common_worker_queue'
     },
+    'CeleryApp.tasks.remove_expired_one_day_files_periodic_task': {
+        'queue': 'common_worker_queue'
+    },
     'CeleryApp.tasks.repack_threads_video_task': {
         'queue': 'ffmpeg_worker_queue'
     }
@@ -34,5 +37,9 @@ app.conf.beat_schedule = {
     'Upload recordings every hour': {
         'task': 'CeleryApp.tasks.upload_recordings_periodic_task',
         'schedule': 60*60,
+    },
+    'Check files and remove every hours': {
+        'task': 'CeleryApp.tasks.remove_expired_one_day_files_periodic_task',
+        'schedule': 60*90,
     },
 }

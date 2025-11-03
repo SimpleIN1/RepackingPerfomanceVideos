@@ -1,0 +1,8 @@
+/* Секция ссылок */
+.downloads {
+    overflow-x: scroll;
+}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{border-bottom:1px solid rgba(255,255,255,0.05);padding:8px;text-align:left}
+th{color:var(--muted);font-weight:500}
+td .btn{padding:6px 10px;font-size:13px}

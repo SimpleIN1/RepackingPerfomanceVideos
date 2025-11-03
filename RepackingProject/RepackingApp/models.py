@@ -1,3 +1,6 @@
+import os
+
+from django.conf import settings
 from django.db import models
 from django.core.validators import MinLengthValidator, MaxLengthValidator
 
@@ -50,3 +53,10 @@ class RecordingTaskIdModel(models.Model):
 
     class Meta:
         unique_together = (("recording", "task_id"), )
+
+
+class RecodingFileUserModel(models.Model):
+    recording = models.ForeignKey(RecordingModel, to_field="record_id", on_delete=models.CASCADE)
+    user = models.ForeignKey("AccountApp.UserModel", on_delete=models.PROTECT)
+    file = models.FilePathField(path=settings.BASE_DIR)
+    datetime_created = models.DateTimeField(auto_now=True)
