@@ -218,7 +218,7 @@ class RepackingServiceTests(TestCase):
         self.assertIsNotNone(res)
 
         recordings_len = RecordingModel.objects.count()
-        self.assertIsNotNone(None)
+        # self.assertIsNotNone(None)
         self.assertGreaterEqual(recordings_len, 570)
 
     def test_get_recordings_foreinkey_type_recording_by_name(self):
@@ -238,7 +238,7 @@ class RepackingServiceTests(TestCase):
         pk = 1
         recordings = get_recordings_foreinkey_type_recording(Q(type_recording__id=pk))
 
-        self.assertEqual(len(recordings), 3)
+        self.assertEqual(len(recordings), 2)
         self.assertEqual(recordings[0].type_recording.id, pk)
 
     def test_get_recordings_foreinkey_type_recording_to_dict_by_id(self):

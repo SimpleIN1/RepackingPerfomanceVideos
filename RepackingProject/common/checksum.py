@@ -20,7 +20,7 @@ def calculate_checksum(string: str, shared_secret: str = None) -> str:
     string_b = string.encode("utf-8")
 
     if not shared_secret:
-        shared_secret = conf.SHARED_SECRET
+        shared_secret = conf.BBB_SHARED_SECRET
     shared_secret_b = shared_secret.encode("utf-8")
 
     hb = hashlib.sha1(string_b + shared_secret_b)
@@ -50,7 +50,7 @@ def add_checksum_to_url(url: str, shared_secret: str = None) -> str | None:
     query = urlencode(parse_query, doseq=True)
 
     if not shared_secret:
-        shared_secret = settings.SHARED_SECRET
+        shared_secret = settings.BBB_SHARED_SECRET
 
     checksum = calculate_checksum(api_call + query, shared_secret)
     query_checksum = f"checksum={checksum}"

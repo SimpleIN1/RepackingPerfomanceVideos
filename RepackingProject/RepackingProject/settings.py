@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 import os
+import sys
 from pathlib import Path
 
 import pytz
@@ -29,16 +30,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = (bool(int(os.getenv('DEBUG', 1))))
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS").split(',')
 
-INTERNAL_IPS = ['127.0.0.1']
+INTERNAL_IPS = os.getenv("INTERNAL_IPS").split(',')
 
-CSRF_TRUSTED_ORIGINS = [
-    'http://127.0.0.1:8000',
-    'http://0.0.0.0:8000',
-]
+CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS").split(',')
 # CORS_ORIGIN_WHITELIST = ["http://127.0.0.1:8000", ]
 
 # Application definition
@@ -149,7 +147,8 @@ AUTH_PASSWORD_VALIDATORS = [
 #     }
 
 # Session settings
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+if not "test" in sys.argv:
+    SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 
 # Caches
 CACHES = {
@@ -190,39 +189,39 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # BBB APIs settings
-SHARED_SECRET = os.getenv("SHARED_SECRET")
-BBB_RESOURCE = "vcs-6.ict.nsc.ru"
-BBB_URL = "https://{0}/bigbluebutton/api/getRecordings?state=published"
+BBB_SHARED_SECRET = os.getenv("BBB_SHARED_SECRET")
+BBB_RESOURCE = os.getenv("BBB_RESOURCE")
+BBB_URL = os.getenv("BBB_URL")
 
 # Celery settings
-CELERY_BROKER_URL = "redis://localhost:6379/1"
-CELERY_RESULT_BACKEND = "redis://localhost:6379/1"
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND")
 
-BROKER_URL = 'redis://localhost:6379/1'
+BROKER_URL = os.getenv("CELERY_BROKER_URL")
 BROKER_TRANSPORT_OPTIONS = {
     'visibility_timeout': 3600
 }
 
 # Redis settings
-REDIS_HOST = "localhost"
-REDIS_PORT = 6379
-REDIS_DB = 2
+REDIS_HOST = os.getenv("REDIS_HOST")
+REDIS_PORT = int(os.getenv("REDIS_PORT"))
+REDIS_DB = int(os.getenv("REDIS_DB"))
 
 # Email settings
-EMAIL_HOST = "smtp.mail.ru"
-EMAIL_PORT = 2525
-EMAIL_USE_TLS = True
+EMAIL_HOST = os.getenv("EMAIL_HOST")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT"))
+EMAIL_USE_TLS = (bool(int(os.getenv('EMAIL_USE_TLS', 1))))
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = os.getenv("EMAIL_HOST_USER")
 
-EMAIL_SENDER = False
+EMAIL_SENDER = (bool(int(os.getenv('EMAIL_SENDER', 1))))
 
 # Site settings
-SCHEMA = "http"
-WEBSITE_NAME = "RepackingVideos"
-DOMAIN = "localhost"
-SUPPORT_EMAIL = "test@ict.nsc.ru"
+SCHEMA = os.getenv("SCHEMA")
+WEBSITE_NAME = os.getenv("WEBSITE_NAME")
+DOMAIN = os.getenv("DOMAIN")
+SUPPORT_EMAIL = os.getenv("SUPPORT_EMAIL")
 
 EXPIRATION_MINUTES = 20
 CONFIRMATION_CODE_SESSION = "confirm-code"

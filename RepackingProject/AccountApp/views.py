@@ -185,10 +185,8 @@ class ForgotPasswordView(View):
             context["form"] = form
             return render(request, self.template_name, context=context)
 
-        # form.send_code(request.session)
-
         cm_user = ConfirmationEmailUser(
-            form.user, request.session, settings.KIND_CODE_2FA,
+            form.user, request.session, settings.KIND_CODE_FORGOT_PASSWORD,
             "confirm-forgot-password", Confirmation2FAEmail
         )
         send_confirmation_email(cm_user)

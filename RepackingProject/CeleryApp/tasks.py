@@ -175,3 +175,6 @@ def remove_expired_one_day_files_periodic_task():
     logging.info("Stop remove recordings files periodic task")
 
 ###   кэширование
+###   отправка письма на почту, уведомляя об успешной обработке записей
+###   environ
+

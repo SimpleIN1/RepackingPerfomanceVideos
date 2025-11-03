@@ -1,12 +1,13 @@
 import json
 from datetime import datetime
+from unittest.mock import patch
 
 from django.conf import settings
 from django.urls import reverse_lazy
 from django.middleware.csrf import get_token
 from django.contrib.auth import login
 from django.contrib.auth.models import AnonymousUser
-from django.test import TestCase, Client, RequestFactory
+from django.test import TestCase, Client, RequestFactory, override_settings
 from django.contrib.sessions.backends.db import SessionStore
 from django.contrib.sessions.middleware import SessionMiddleware
 
