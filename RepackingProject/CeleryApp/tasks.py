@@ -104,34 +104,43 @@ def repack_threads_video_task(self, resource, recording_id, user_id):
         else:
             break
 
-    update_recording_by_record_id(recording_id, status=4)
+    try:
+        update_recording_by_record_id(recording_id, status=4)
 
-    logging.info("Start upload to NEXTCLOUD")
+        logging.info("Start upload to NEXTCLOUD")
 
-    upload_to_nextcloud(
-        f"{remote_dir}/{fname}", f"{local_source_dir}/{fname}"
-    )
-    upload_to_nextcloud(
-        f"{remote_dir}/chat.xml", f"{local_source_dir}/{fname_popcorn}"
-    )
+        upload_to_nextcloud(
+            f"{remote_dir}/{fname}", f"{local_source_dir}/{fname}"
+        )
+        upload_to_nextcloud(
+            f"{remote_dir}/chat.xml", f"{local_source_dir}/{fname_popcorn}"
+        )
 
-    logging.info("Upload successfully")
+        logging.info("Upload successfully")
 
-    a = Archiving(path=local_source_dir, expansion="zip")
-    filename = a.make_archive()
-    logging.info(f"Create archive {filename}")
+        a = Archiving(path=local_source_dir, expansion="zip")
+        filename = a.make_archive()
+        logging.info(f"Create archive {filename}")
 
-    create_recording_file(user_id=user_id,
-                          recording_id=recording_id,
-                          file=filename)
+        create_recording_file(user_id=user_id,
+                              recording_id=recording_id,
+                              file=filename,
+                              file_size=os.path.getsize(filename))
 
-    logging.info("upload to db recording file")
+        logging.info("upload to db recording file")
 
-    shutil.rmtree(local_source_dir)
+        shutil.rmtree(local_source_dir)
 
-    update_recording_by_record_id(recording_id, status=5)
+        update_recording_by_record_id(recording_id, status=5)
 
-    logging.info(f"Stop process {resource}, {recording_id}")
+        logging.info(f"Stop process {resource}, {recording_id}")
+    except FileNotFoundError as f:
+        logging.error(f)
+
+        update_recording_by_record_id(recording_id, status=6)
+
+        r.delete(self.request.id)
+        r.save()
 
 
 @app.task
@@ -165,6 +174,4 @@ def remove_expired_one_day_files_periodic_task():
 
     logging.info("Stop remove recordings files periodic task")
 
-###   возможость скачивания с сервера!?
 ###   кэширование
-###   удаление ненужых файлов

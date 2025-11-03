@@ -60,3 +60,4 @@ class RecodingFileUserModel(models.Model):
     user = models.ForeignKey("AccountApp.UserModel", on_delete=models.PROTECT)
     file = models.FilePathField(path=settings.BASE_DIR)
     datetime_created = models.DateTimeField(auto_now=True)
+    file_size = models.PositiveIntegerField(default=0)

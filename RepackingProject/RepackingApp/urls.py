@@ -11,5 +11,6 @@ urlpatterns = [
     path("api/records/terminate/", views.TerminateRecordingsAPIView.as_view(), name="repacking-api-terminate-records"),
     path("api/rooms/", views.RoomsAPIView.as_view(), name="repacking-api-rooms"),
 
-    path("downloads/", views.downloads_view, name="repacking-downloads"),
+    path("download/", views.DownloadView.as_view(), name="repacking-downloads"),
+    path("download/<str:recording_id>/", views.DownloadFileView.as_view(), name="repacking-downloads-id"),
 ]

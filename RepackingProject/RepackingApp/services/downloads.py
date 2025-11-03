@@ -15,6 +15,20 @@ def get_recording_files(filter_query: Q) -> List[RecodingFileUserModel]:
     return RecodingFileUserModel.objects.filter(filter_query)
 
 
+def get_download_recording_files(filter_query: Q) -> List[RecodingFileUserModel]:
+    """
+    Извлечение записей в соответствии с условием
+    :param filter_query:
+    :return:
+    """
+
+    return RecodingFileUserModel \
+        .objects \
+        .select_related("recording") \
+        .select_related("recording__type_recording") \
+        .filter(filter_query)
+
+
 def create_recording_file(**data) -> RecodingFileUserModel:
     """
     Загрука файла конференции

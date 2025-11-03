@@ -10,8 +10,9 @@ from django.db.models import Q
 from django.conf import settings
 from django.shortcuts import render
 from django.core.cache import cache
-from django.http import HttpResponse
 from django.views.generic import View
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponse, FileResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_protect, csrf_exempt
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -19,7 +20,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from CeleryApp.app import app
 from CeleryApp.tasks import repack_threads_video_task, repack_threads_video_task
 from RepackingApp import forms
-from RepackingApp.models import RecordingModel, RecordingTaskIdModel
+from RepackingApp.models import RecordingModel, RecordingTaskIdModel, RecodingFileUserModel
+from RepackingApp.services.downloads import get_recording_files, get_download_recording_files
 from RepackingApp.services.record_task import create_recording_task, delete_recordings_tasks, get_recording_tasks, \
     create_recording_tasks
 from RepackingApp.services.records import get_type_recordings, \
@@ -209,5 +211,19 @@ class RoomsAPIView(LoginRequiredMixin, View):
         )
 
 
-def downloads_view(request):
-    return render(request, "repacking/downloads.html", context={})
+class DownloadView(LoginRequiredMixin, View):
+    template_name = "repacking/downloads.html"
+
+    def get(self, request):
+        context = {}
+
+        recording_files = get_download_recording_files(Q(user_id=self.request.user.id))
+        context["rfiles"] = recording_files
+
+        return render(request, self.template_name, context=context)
+
+
+class DownloadFileView(LoginRequiredMixin, View):
+    def get(self, request, recording_id):
+        rfile = get_object_or_404(RecodingFileUserModel, recording_id=recording_id)
+        return FileResponse(open(rfile.file, "rb"))

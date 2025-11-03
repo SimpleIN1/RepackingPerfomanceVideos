@@ -17,8 +17,26 @@
         <thead>
           <tr><th>#</th><th>Название записи</th><th>Дата</th><th>Время</th><th>Размер</th><th></th></tr>
         </thead>
-        <tbody><tr><td>1</td><td>Заседание 2025-02-28 09:30</td><td>2025-02-28</td><td>09:30</td><td>403 МБ</td><td><a class="btn" href="https://example.com/2025-02-28" download="">Скачать</a></td></tr><tr><td>2</td><td>Заседание 2025-03-07 09:30</td><td>2025-03-07</td><td>09:30</td><td>431 МБ</td><td><a class="btn" href="https://example.com/2025-03-07" download="">Скачать</a></td></tr><tr><td>3</td><td>Заседание 2025-03-14 09:30</td><td>2025-03-14</td><td>09:30</td><td>259 МБ</td><td><a class="btn" href="https://example.com/2025-03-14" download="">Скачать</a></td></tr><tr><td>4</td><td>Заседание 2025-03-21 09:30</td><td>2025-03-21</td><td>09:30</td><td>261 МБ</td><td><a class="btn" href="https://example.com/2025-03-21" download="">Скачать</a></td></tr><tr><td>5</td><td>Заседание 2025-03-28 09:30</td><td>2025-03-28</td><td>09:30</td><td>370 МБ</td><td><a class="btn" href="https://example.com/2025-03-28" download="">Скачать</a></td></tr></tbody>
+        <tbody>
+        {% if rfiles %}
+          {% for item in rfiles %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ item.recording.type_recording.name }}</td>
+            <td>{{ item.recording.datetime_created|date:"Y.m.d" }}</td>
+            <td>{{ item.recording.datetime_created|date:"H:i" }}</td>
+            <td>{{ item.file_size|filesizeformat }}</td>
+            <td>
+              <a class="btn" href="{% url 'repacking-downloads-id' recording_id=item.recording_id %}" download="">Скачать</a>
+            </td>
+          </tr>
+          {% endfor %}
+        {% endif %}
+        </tbody>
       </table>
+      {% if not rfiles %}
+        <p style="padding-top: 10px;">Не записей для скачивания</p>
+      {% endif %}
     </section>
 
   </div>

@@ -1,3 +1,5 @@
+import os
+
 from django.contrib import admin
 
 from RepackingApp.models import TypeRecordingModel, RecordingModel, RecordingTaskIdModel, RecodingFileUserModel
@@ -31,3 +33,8 @@ class RecordingTaskIdModelAdmin(admin.ModelAdmin):
 @admin.register(RecodingFileUserModel)
 class RecodingFileUserModelAdmin(admin.ModelAdmin):
     list_display = ("recording", "user", "file", "datetime_created")
+
+    def delete_queryset(self, request, queryset):
+        for obj in queryset:
+            os.remove(obj.file)
+            obj.delete()
