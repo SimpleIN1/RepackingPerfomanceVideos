@@ -21,8 +21,9 @@ from AccountApp import forms
 from AccountApp.services.user import get_user, change_password_by_user_id_from_session
 from AccountApp.models import UserModel
 from common.code_generator import generate_code
-from common.mail.mail import Confirmation2FAEmail
-from AccountApp.services.confirm_email_user import ConfirmationEmailUser, send_confirmation_email
+from common.mail.email_user import ConfirmationEmailUser
+from common.mail.mail import Confirmation2FAEmail, ConfirmationForgotPasswordEmail, ConfirmationEmail
+from AccountApp.services.confirm_email_user import send_confirmation_email
 from AccountApp.services.session_service import ConfirmationCodeSessionService, UserSession
 
 
@@ -187,7 +188,7 @@ class ForgotPasswordView(View):
 
         cm_user = ConfirmationEmailUser(
             form.user, request.session, settings.KIND_CODE_FORGOT_PASSWORD,
-            "confirm-forgot-password", Confirmation2FAEmail
+            "confirm-forgot-password", ConfirmationForgotPasswordEmail
         )
         send_confirmation_email(cm_user)
 
@@ -307,7 +308,7 @@ class BaseInfoProfileView(LoginRequiredMixin, View):
         if request.user.email != form.cleaned_data["email"]:
             cm_user = ConfirmationEmailUser(
                 request.user, request.session, settings.KIND_CODE_2FA,
-                "confirm-email-profile", Confirmation2FAEmail,
+                "confirm-email-profile", ConfirmationEmail,
                 email=request.user.email
             )
             send_confirmation_email(cm_user)

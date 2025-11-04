@@ -17,3 +17,8 @@ class ConfirmationEmail(SenderEmail):
 class ConfirmationForgotPasswordEmail(SenderEmail):
     template = "mail/confirmation-code.html"
     subject = f"Восстановление пароля — {settings.WEBSITE_NAME}"
+
+
+class NotifyProcessedRecordsEmail(SenderEmail):
+    template = "mail/notify-processed-records.html"
+    subject = f"Обработка записей — {settings.WEBSITE_NAME}"

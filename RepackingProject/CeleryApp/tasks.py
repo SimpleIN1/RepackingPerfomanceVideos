@@ -63,6 +63,7 @@ def repack_threads_video_task(self, resource, recording_id, user_id):
     :param self:
     :param resource:
     :param recording_id:
+    :param user_id:
     :return: None
     """
 
@@ -175,6 +176,4 @@ def remove_expired_one_day_files_periodic_task():
     logging.info("Stop remove recordings files periodic task")
 
 ###   кэширование
-###   отправка письма на почту, уведомляя об успешной обработке записей
-###   environ
-
+###   отправка письма на почту, уведомляя об успешной обработке записей(переодичская таска checker)

@@ -583,7 +583,7 @@ class RecordingTaskTests(TestCase):
         self.assertEqual(count, 3)
 
 
-class StartSubProcessTests(TestCase):
+class StartSubProcessTests1(TestCase):
     def test_start_subprocess(self):
         resource = "vcs-6.ict.nsc.ru"
         recording_id = "c53d75df9d50c196f87e15ce56bd4f6f6235cc24-1666841342472"
@@ -606,7 +606,7 @@ class ProcessRecordingsAPIView(TestCase):
         self.factory = RequestFactory()
 
 
-class NextcloudUploadingTests(TestCase):
+class NextcloudUploadingTests1(TestCase):
     def test_upload_file(self):
         source_file = "test.txt"
         with open(source_file, 'w') as f:

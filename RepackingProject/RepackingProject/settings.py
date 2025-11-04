@@ -226,9 +226,12 @@ SUPPORT_EMAIL = os.getenv("SUPPORT_EMAIL")
 EXPIRATION_MINUTES = 20
 CONFIRMATION_CODE_SESSION = "confirm-code"
 
+REDIS_KEY_CHECKER = "rediskeyckecker"
+
 KIND_CODE_2FA = "2fa"
 KIND_CODE_EMAIL = "email"
 KIND_CODE_FORGOT_PASSWORD = "forgotpassword"
+KIND_NOTIFY_PROCESSED_VIDEOS = "processedvideos"
 
 # Nextcloud mydisk settings
 NEXTCLOUD_RESOURCE = os.getenv("NEXTCLOUD_RESOURCE")

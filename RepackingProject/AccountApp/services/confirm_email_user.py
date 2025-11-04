@@ -2,17 +2,8 @@ from django.conf import settings
 from django.urls import reverse_lazy
 
 from common.code_generator import generate_code
+from common.mail.email_user import ConfirmationEmailUser
 from AccountApp.services.session_service import ConfirmationCodeSessionService
-
-
-class ConfirmationEmailUser:
-    def __init__(self, user, session, kind, api_call, callback, **data):
-        self.user = user
-        self.session = session
-        self.kind = kind
-        self.api_call = api_call
-        self.callback = callback
-        self.data = data
 
 
 def send_confirmation_email(cm_user: ConfirmationEmailUser):

@@ -1,0 +1,27 @@
+{% extends 'mail/base-mail.html' %}
+
+{% block visiblemailtext %} Ваши видео успешно обработаны — {{video_count}} файлов готовы к скачиванию.{% endblock %}
+{% block title %}Обработанные записи{% endblock %}
+{% block headertitle %}Уведомление об обработанных записях{% endblock %}
+
+{% block content %}
+<h1 style="margin:0 0 12px 0;font-size:20px;color:#0b1220;">Ваши видео успешно обработаны 🎉</h1>
+<p style="margin:0 0 18px 0;color:#39424a;line-height:1.5;">
+  Сервис <strong>{{ website_name }}</strong> завершил обработку ваших видеофайлов. Всего успешно обработано: <strong>{{video_count}}</strong>.
+</p>
+
+<p style="margin:0 0 18px 0;color:#39424a;line-height:1.5;">
+  Теперь вы можете просмотреть или скачать результаты, перейдя по ссылке ниже.
+</p>
+
+<!-- Кнопка -->
+<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:14px auto 0 auto;">
+  <tr>
+    <td>
+      <a class="btn" href="{{videos_url}}" style="display:inline-block;padding:12px 24px;border-radius:10px;background:#2563eb;color:#fff;text-decoration:none;font-weight:600;">
+        Перейти к видео
+      </a>
+    </td>
+  </tr>
+</table>
+{% endblock %}

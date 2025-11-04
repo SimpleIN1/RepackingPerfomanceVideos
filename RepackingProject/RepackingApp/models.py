@@ -1,5 +1,6 @@
 import os
 
+import uuid
 from django.conf import settings
 from django.db import models
 from django.core.validators import MinLengthValidator, MaxLengthValidator
@@ -61,3 +62,11 @@ class RecodingFileUserModel(models.Model):
     file = models.FilePathField(path=settings.BASE_DIR)
     datetime_created = models.DateTimeField(auto_now=True)
     file_size = models.PositiveIntegerField(default=0)
+
+
+class OrderRecordingModel(models.Model):
+    count = models.PositiveIntegerField()
+    count_failed = models.PositiveIntegerField()
+    uuid = models.UUIDField(default=uuid.uuid4)
+    user = models.ForeignKey("AccountApp.UserModel", on_delete=models.PROTECT)
+    processed = models.BooleanField(default=False)
