@@ -12,6 +12,7 @@ from django.forms.models import model_to_dict
 from django.core.exceptions import ValidationError
 from django.test import TestCase, Client, RequestFactory
 
+from AccountApp.models import UserModel
 from RepackingApp.forms import ProcessRecordingsForm
 from RepackingApp.models import RecordingModel, TypeRecordingModel, RecordingTaskIdModel
 from RepackingApp.services.records import request_recordings, parse_xml_recordings, \
@@ -465,6 +466,14 @@ class RecordingTaskTests(TestCase):
         tree = etree.fromstring(self.content)
         recordings_xml = tree.find("recordings")
         self.one_recording = recordings_xml[0]
+        self.user_data = {
+            "username": "user",
+            "email": "user@mail.ru",
+            "last_name": "last name user",
+            "first_name": "first name user",
+            "password": "passwoRd4_",
+        }
+        self.user = UserModel.objects.create_user(**self.user_data)
 
     def test_create_recording_task(self):
         recording = parse_xml_recording(self.one_recording)
@@ -477,7 +486,7 @@ class RecordingTaskTests(TestCase):
         tmp_recording = RecordingModel.objects.get(record_id=recording.record_id)
 
         uid = uuid.uuid4()
-        create_recording_task(recording=tmp_recording, task_id=uid)
+        create_recording_task(recording=tmp_recording, task_id=uid, user_id=self.user.id)
 
         meeting_task = RecordingTaskIdModel.objects.get(task_id=uid)
         self.assertEqual(meeting_task.task_id, str(uid))
@@ -493,7 +502,7 @@ class RecordingTaskTests(TestCase):
         tmp_recording = RecordingModel.objects.get(record_id=recording.record_id)
 
         uid = uuid.uuid4()
-        create_recording_task(recording=tmp_recording, task_id=str(uid))
+        create_recording_task(recording=tmp_recording, task_id=str(uid), user_id=self.user.id)
 
         meeting_task = RecordingTaskIdModel.objects.get(task_id=uid)
         self.assertEqual(meeting_task.task_id, str(uid))
@@ -522,7 +531,7 @@ class RecordingTaskTests(TestCase):
         tmp_recording_ids = [tmp_recording.record_id for tmp_recording in tmp_recordings]
         for r in tmp_recordings:
             uid = uuid.uuid4()
-            create_recording_task(recording=r, task_id=str(uid))
+            create_recording_task(recording=r, task_id=str(uid), user_id=self.user.id)
 
         recording_tasks = get_recording_tasks(Q(recording_id__in=tmp_recording_ids))
 
@@ -539,7 +548,7 @@ class RecordingTaskTests(TestCase):
         tmp_recording = RecordingModel.objects.get(record_id=recording.record_id)
 
         uid = uuid.uuid4()
-        create_recording_task(recording=tmp_recording, task_id=uid)
+        create_recording_task(recording=tmp_recording, task_id=uid, user_id=self.user.id)
 
         meeting_task = RecordingTaskIdModel.objects.get(task_id=uid)
         self.assertIsNotNone(meeting_task)
@@ -564,7 +573,7 @@ class RecordingTaskTests(TestCase):
         l = []
         for r in tmp_recordings:
             uid = uuid.uuid4()
-            l.append(RecordingTaskIdModel(recording=r, task_id=str(uid)))
+            l.append(RecordingTaskIdModel(recording=r, task_id=str(uid), user_id=self.user.id))
 
         res = create_recording_tasks(l)
         self.assertIsNotNone(res)
