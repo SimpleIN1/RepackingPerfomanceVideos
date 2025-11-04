@@ -8,11 +8,6 @@ body {
   margin: 0;
 }
 
-#notfound {
-  position: relative;
-  height: calc(100vh - 35px);
-}
-
 #notfound .notfound {
   position: absolute;
   left: 50%;
@@ -98,4 +93,8 @@ body {
   .notfound h2 {
     font-size: 16px;
   }
+}
+
+.container {
+  min-height: calc(100vh - 90px);
 }
