@@ -3,26 +3,22 @@ import signal
 import psutil
 
 
-def terminate_process(pid):
-
+def terminate_process(process_name):
+    """
+    Завершение процесса по имени
+    :param process_name:
+    :return:
+    """
     # os.system(f"kill {pid}")
     # os.system(f"kill -SIGKILL {pid}")
     # os.system(f"killall -9 {pid}")
-    # os.system(f"pkill -P {pid}")
-
-    pid = int(pid)
-
-    try:
-        os.kill(pid, signal.SIGKILL)
-    except ProcessLookupError:
-        print(f"Процесс с PID {pid} не найден.")
-
-    pid += 1
+    # os.system(f"pkill -P {pid}"
+    #     os.kill(pid, signal.SIGKILL)
 
     try:
-        os.kill(pid, signal.SIGKILL)
+        os.system(f"pkill -9 -f '{process_name}'")
     except ProcessLookupError:
-        print(f"Процесс с PID {pid} не найден.")
+        print(f"Процесс с именем {process_name} не найден.")
 
 
 def terminate_process_psutil(pid) -> None:

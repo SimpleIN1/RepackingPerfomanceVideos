@@ -1,14 +1,9 @@
 
 from django import forms
-from django.conf import settings
-from django.urls import reverse_lazy
 from django.contrib.auth.password_validation import validate_password
 
 from AccountApp.models import UserModel
-from common.mail.mail import ConfirmationEmail
-from common.code_generator import generate_code
 from AccountApp.services.user import get_user, update_user_by_pk
-from AccountApp.services.session_service import ConfirmationCodeSessionService
 
 
 class BaseInfoProfileGETForm(forms.Form):

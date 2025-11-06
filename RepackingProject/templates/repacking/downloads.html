@@ -24,12 +24,12 @@
           {% for item in rfiles %}
           <tr>
             <td>{{ forloop.counter }}</td>
-            <td>{{ item.recording.type_recording.name }}</td>
-            <td>{{ item.recording.datetime_created|date:"Y.m.d" }}</td>
-            <td>{{ item.recording.datetime_created|date:"H:i" }}</td>
+            <td>{{ item.recording_task.recording.type_recording.name }}</td>
+            <td>{{ item.recording_task.recording.datetime_created|date:"Y.m.d" }}</td>
+            <td>{{ item.recording_task.recording.datetime_created|date:"H:i" }}</td>
             <td>{{ item.file_size|filesizeformat }}</td>
             <td>
-              <a class="btn" href="{% url 'repacking-downloads-id' recording_id=item.recording_id %}" download="">Скачать</a>
+              <a class="btn" href="{% url 'repacking-downloads-id' id=item.id %}" download="">Скачать</a>
             </td>
           </tr>
           {% endfor %}

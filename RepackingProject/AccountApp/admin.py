@@ -37,6 +37,13 @@ class UserModelAdmin(UserAdmin):
              ),
          },
          ),
+        (_("Загрузка"),
+        {
+            "fields": (
+                "nextcloud_upload",
+            ),
+        },
+        ),
         (_("Important dates"), {"fields": ("last_login", "date_joined")}),
     )
     list_display = ("id", "last_name", "first_name", "middle_name", "email", "is_active", "is_staff",)

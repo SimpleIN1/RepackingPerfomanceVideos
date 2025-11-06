@@ -110,6 +110,13 @@
     }
     .terminate-btn:hover{background:#771d1d}
 
+    .upload-btn {
+        background: var(--success);
+    }
+    .upload-btn:hover {
+        background: #04772e;
+    }
+
     .help{font-size:12px;color:var(--muted);margin-top:6px}
 
 

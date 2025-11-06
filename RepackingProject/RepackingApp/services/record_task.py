@@ -15,6 +15,16 @@ def get_recording_tasks(filter_query: Q) -> List[RecordingTaskIdModel]:
     return RecordingTaskIdModel.objects.filter(filter_query)
 
 
+def get_recording_order_tasks(filter_query: Q) -> List[RecordingTaskIdModel]:
+    """
+    Извлечение recording тасок
+    :param filter_query:
+    :return:
+    """
+
+    return RecordingTaskIdModel.objects.select_related("order").filter(filter_query)
+
+
 def update_recording_tasks(filter_query: Q, **data) -> None:
     """
     Обновлeние recording тасок
@@ -56,3 +66,18 @@ def delete_recordings_tasks(filter_query: Q) -> None:
         .objects \
         .filter(filter_query) \
         .delete()
+
+
+def get_recording_tasks_status(user_id, type_recording_id):
+    query_status = (Q(status=4) | Q(status=5))
+
+    items = RecordingTaskIdModel \
+        .objects \
+        .select_related("order", "recording") \
+        .filter(
+            Q(recording__type_recording_id=type_recording_id) &
+            (query_status | (Q(order__user_id=user_id) & ~query_status))
+        ) \
+        .values("recording_id", "status")
+
+    return items

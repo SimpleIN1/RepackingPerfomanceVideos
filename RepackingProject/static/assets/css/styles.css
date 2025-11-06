@@ -27,6 +27,8 @@
     --state-continued: #01acff;
     --state-pending: #e2e3e5;
     --state-processing: yellow;
+
+    --logo-url: url(/static/assets/logo/logo.png);
 }
 
 [data-theme="light"] {
@@ -52,6 +54,8 @@
     --state-continued: blue;
     --state-pending: #4f4f4f;
     --state-processing: #b9a506;
+
+    --logo-url: url(/static/assets/logo/logo-dark.png);
 }
 
 * { box-sizing: border-box; }
@@ -133,6 +137,15 @@ html {
 .header-logo {
     text-decoration: none;
     color: var(--white);
+}
+
+.header-logo-img{
+    width: 42px;
+    height: 30.5px;
+    background-image: var(--logo-url);
+    background-size: cover, 50% auto;
+    background-position: center center;
+    background-repeat: no-repeat;
 }
 
 .d-none {

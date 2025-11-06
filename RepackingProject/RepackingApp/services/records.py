@@ -248,6 +248,22 @@ def get_recordings_to_dict(fields: List[str], filter_query: Q):
     return queryset
 
 
+def get_recordings_to_dict_with_status(fields: List[str], filter_query: Q):
+    """
+    Извлекает из базы данных конференции, преобразуя в словарь
+    :return:
+    """
+
+    queryset = RecordingTaskIdModel \
+        .objects \
+        .select_related("recording", "order") \
+        .filter(filter_query)
+
+    print(RecordingModel.objects.all().filter(recordingtaskidmodel__order__user_id=1).query)
+
+    return queryset
+
+
 def get_type_recordings_to_dict() -> List[TypeRecordingModel]:
     """
     Извлекает из базы данных типы конференций, преобразуя в словарь
@@ -267,6 +283,18 @@ def get_type_recordings(order_by=False):
     :return:
     """
     return TypeRecordingModel.objects.all().order_by("name")
+
+
+def get_type_recording_by_id(id) -> TypeRecordingModel | None:
+    """
+    Извлекает из базы данных тип конференции
+    :param id:
+    :return:
+    """
+    try:
+        return TypeRecordingModel.objects.get(pk=id)
+    except TypeRecordingModel.DoesNotExist:
+        return None
 
 
 def update_recording_by_record_id(recording_id: str, **data) -> None:

@@ -10,9 +10,11 @@ class EmailUser:
 
 
 class NotifyEmailUser(EmailUser):
-    def __init__(self, video_count, *args, **kwargs):
+    def __init__(self, video_count, video_count_failed, type_name, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.video_count = video_count
+        self.video_count_failed = video_count_failed
+        self.type_name = type_name
 
 
 class ConfirmationEmailUser(EmailUser):

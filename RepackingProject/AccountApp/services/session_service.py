@@ -51,6 +51,9 @@ class ConfirmationCodeSessionService:
         if not self.session_code.get(kind):
             return False
 
+        if self.get_attempt(kind) > 3:
+            return False
+
         confirmation_email = self.session_code[kind].get("confirmation_email")
 
         if confirmation_email:
@@ -111,3 +114,16 @@ class ConfirmationCodeSessionService:
 
         except KeyError:
             return False
+
+    def increase_attempt(self, kind):
+        attempt = self.session_code[kind].get("attempt") or 0
+        self.session_code[kind]["attempt"] = attempt+1
+        self.save()
+
+    def get_attempt(self, kind):
+        attempt = self.session_code[kind].get("attempt") or 0
+        return attempt
+
+    def reset_attempt(self, kind):
+        self.session_code[kind]["attempt"] = 0
+        self.save()

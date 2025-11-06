@@ -18,8 +18,9 @@ def send_confirmation_email(cm_user: ConfirmationEmailUser):
     if settings.DEBUG:
         print("CODE:", code)
 
-    ccm = ConfirmationCodeSessionService(cm_user.session, cm_user.user)
-    ccm.add(code, cm_user.kind, **cm_user.data)
+    ccs = ConfirmationCodeSessionService(cm_user.session, cm_user.user)
+    ccs.add(code, cm_user.kind, **cm_user.data)
+    ccs.reset_attempt(cm_user.kind)
 
     session_id = cm_user.session.session_key
     verify_url = f"{settings.SCHEMA}://{settings.DOMAIN}{str(reverse_lazy(cm_user.api_call))}?session_id={session_id}"

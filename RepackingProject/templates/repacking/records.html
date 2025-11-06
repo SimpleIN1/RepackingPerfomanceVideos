@@ -103,6 +103,10 @@
                 {% csrf_token %}
                 <button class="btn terminate-btn" id="terminateBtn" type="submit">Завершить</button>
               </form>
+              <form id="uploadIDForm" method="POST" action="{% url 'repacking-api-upload-records' %}">
+                {% csrf_token %}
+                <button class="btn upload-btn" id="uploadBtn" type="submit">Загрузить</button>
+              </form>
               <button class="btn ghost" id="selectAllBtn">Выбрать всё</button>
               <button class="btn ghost" id="deselectAllBtn">Снять выделение</button>
             </div>
@@ -229,13 +233,15 @@
             el.dataset.index = idx;
             el.dataset.id = rec.id;
 
+            const statusRec = (rec.status ? rec.status: 1);
+
             el.innerHTML = `
               <input type="checkbox" class="record-input" ${selectedIds.has(rec.id)?'checked':''} style="pointer-events:none">
               <div style="flex:1">
                 <div><strong><a href="${rec.url}" class="url-link" target="_blank" rel="noopener">${rec.title}</a></strong></div>
                 <div class="meta">Дата: ${rec.date} · Время: ${rec.time} · Длительность: ${rec.duration}</div>
                 <div class="meta">Статус:
-                  <span style="color:${stateRecord[rec.status][0]}">${stateRecord[rec.status][1]}</span>
+                  <span style="color:${stateRecord[statusRec][0]}">${stateRecord[statusRec][1]}</span>
                 </div>
               </div>`;
 
@@ -279,7 +285,6 @@
     }
 
     function attachButtons() {
-        console.log("attachButtons");
         document.getElementById('filterBtn').onclick = applyFilter;
         document.getElementById('clearFilterBtn').onclick = () => {
             fromDate.value = '';
@@ -341,12 +346,47 @@
             title:`Заседание ${date} ${time}`,
             duration: duration,
             size:`${Math.floor(Math.random()*400+100)} МБ`,
-            status: item.status,
+            status: 1,
             url: item.url,
           });
         });
         data.records[pk] = list;
         applyFilter();
+
+        sendRequestRecordingsStatus(pk);
+
+      })
+      .catch(error => {
+          console.log('Error:', error);
+      });
+    }
+
+
+    function sendRequestRecordingsStatus(pk) {
+      let action = "{% url 'repacking-api-records-status' pk='0' %}".replace('0', pk);
+      loadingSpinner1.style.display = 'block';
+      fetch(action, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json; charset=UTF-8"
+          }
+      }).then(response => response.json())
+      .then(response => {
+
+        if (!response.success) {
+          return
+        }
+        loadingSpinner1.style.display = 'none';
+        const list = [];
+
+        Array.from(response.recordings).forEach(item => {
+          visibleRecords.forEach(r => {
+              if (r.id == item.recording_id) {
+                  r.status = item.status;
+              }
+          });
+        });
+        renderRecords();
       })
       .catch(error => {
           console.log('Error:', error);

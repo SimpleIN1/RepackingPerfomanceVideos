@@ -1,10 +1,8 @@
+{% load static %}
 <header class="site-header">
   <a href="{% url 'home' %}" class="header-logo">
     <div class="site-left">
-      <svg viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="10" stroke="var(--accent)" stroke-width="2" fill="none"/>
-        <path d="M12 6 L12 12 L16 14" stroke="var(--accent)" stroke-width="2" fill="none" stroke-linecap="round"/>
-      </svg>
+      <div class="header-logo-img"></div>
       <strong>{{ website_name }}</strong>
     </div>
   </a>

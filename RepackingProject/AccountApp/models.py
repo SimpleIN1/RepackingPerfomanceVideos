@@ -16,3 +16,4 @@ class UserModel(AbstractUser):
     email = models.EmailField(unique=True)
     middle_name = models.CharField(max_length=150, null=True, blank=True, verbose_name="Отчество")
     two_factor_auth = models.BooleanField(default=False, verbose_name="Двухфакторная аутентификация (2FA)")
+    nextcloud_upload = models.BooleanField(default=False, verbose_name="Загрузка в NextCloud")
