@@ -126,6 +126,10 @@ Run application:
 ## Settings environments
 Create .env files, configure environments and add envs to the .env files.
 
+Create files:
+    
+    touch .docker.env .docker.posgres.env .docker.broker.env .docker.flower.env
+
 file .docker.env:
     
     DEBUG=0
@@ -195,10 +199,10 @@ Run create superuser in container:
     
     docker-compose -f docker-compose.yml exec server ../venv/bin/python manage.py createsuperuser
 
-Run load staticfiles to admin panel in container
+Run load staticfiles to admin panel in container:
  
     docker-compose -f docker-compose.yml exec server ../venv/bin/python manage.py collectstaic
 
-Run uploading recording from a resource in container
+Run uploading recording from a resource in container:
     
     docker-compose -f docker-compose.yml exec server  ../venv/bin/python manage.py upload_recordings
