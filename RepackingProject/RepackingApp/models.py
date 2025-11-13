@@ -40,6 +40,7 @@ class OrderRecordingModel(models.Model):
     count_canceled = models.PositiveIntegerField(default=0)
     uuid = models.UUIDField(default=uuid.uuid4)
     user = models.ForeignKey("AccountApp.UserModel", on_delete=models.PROTECT)
+    type_recording = models.ForeignKey(TypeRecordingModel, on_delete=models.CASCADE)
     processed = models.BooleanField(default=False)
 
     class Meta:
@@ -63,8 +64,9 @@ class RecordingTaskIdModel(models.Model):
                                validators=[
                                    MinLengthValidator(36), MaxLengthValidator(36)
                                ], unique=True)
-    order = models.ForeignKey(OrderRecordingModel, on_delete=models.PROTECT)
+    order = models.ForeignKey(OrderRecordingModel, on_delete=models.CASCADE)
     status = models.PositiveSmallIntegerField(default=1, choices=STATUS_CHOICES)
+    datetime_created = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = (("recording", "task_id"), )

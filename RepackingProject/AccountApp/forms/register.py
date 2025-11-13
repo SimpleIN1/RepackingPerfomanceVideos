@@ -55,6 +55,7 @@ class RegisterModelForm(PasswordCleaner, forms.ModelForm):
         instance = super().save(commit=False)
 
         instance.is_active = False
+        instance.set_password(self.cleaned_data["password"])
 
         if commit:
             instance.save()
@@ -63,4 +64,4 @@ class RegisterModelForm(PasswordCleaner, forms.ModelForm):
 
     class Meta:
         model = UserModel
-        fields = ['last_name', 'middle_name', 'first_name', 'email', 'password', 're_password']
+        fields = ['last_name', 'first_name', 'middle_name', 'email', 'password', 're_password']

@@ -1,0 +1,134 @@
+
+version: "3"
+
+services:
+  nginx:
+    image: nginx:1.29
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:9000:9000"
+    depends_on:
+      - server
+    volumes:
+      - ./nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
+      - static-volume:/usr/src/app/RepackingProject/static
+
+  server:
+    build:
+      context: .
+      dockerfile: dockerfile/Dockerfile
+      target: server
+    restart: always
+    depends_on:
+      - redis
+    env_file:
+      - .docker.postgres.env
+      - .docker.broker.env
+      - .docker.env
+    expose:
+      - "8000"
+    volumes:
+      - ./RepackingProject/:/usr/src/app/RepackingProject
+      - ./RepackingProject/files:/usr/src/app/RepackingProject/files
+#      - recording-files-volume:/usr/src/app/RepackingProject/files
+      - static-volume:/usr/src/app/RepackingProject/static
+    command: bash -c '/usr/src/app/venv/bin/python manage.py runserver 0.0.0.0:8000'
+#    command: bash -c '/usr/src/app/venv/bin/gunicorn --timeout 600 --workers 6 --bind 0.0.0.0:8000 RepackingProject.wsgi:application'
+
+  celery-worker-1:
+    build:
+      context: .
+      dockerfile: dockerfile/celery.ffmpeg.Dockerfile
+    restart: unless-stopped
+    command: bash -c '/usr/src/app/venv/bin/celery -A CeleryApp.app worker --loglevel=debug -c 1 -Q ffmpeg_worker_queue -n ffmpeg-worker'
+    depends_on:
+      - redis
+    env_file:
+      - .docker.postgres.env
+      - .docker.broker.env
+      - .docker.env
+    volumes:
+#      - recording-files-volume:/usr/src/app/RepackingProject/files
+      - ./RepackingProject/files:/usr/src/app/RepackingProject/files
+
+  celery-worker-2:
+    build:
+      context: .
+      dockerfile: dockerfile/Dockerfile
+      target: celery
+    restart: unless-stopped
+    command: bash -c '/usr/src/app/venv/bin/celery -A CeleryApp.app worker --beat --loglevel=debug -c 4 -Q common_worker_queue -n common-worker'
+    depends_on:
+      - redis
+    env_file:
+      - .docker.postgres.env
+      - .docker.broker.env
+      - .docker.env
+    volumes:
+#      - recording-files-volume:/usr/src/app/RepackingProject/files
+      - ./RepackingProject/files:/usr/src/app/RepackingProject/files
+
+  celery-worker-3:
+    build:
+      context: .
+      dockerfile: dockerfile/Dockerfile
+      target: celery
+    restart: unless-stopped
+    command: bash -c '/usr/src/app/venv/bin/celery -A CeleryApp.app worker --loglevel=debug -c 1 -Q upload_worker_queue -n upload-worker'
+    depends_on:
+      - redis
+    env_file:
+      - .docker.postgres.env
+      - .docker.broker.env
+      - .docker.env
+    volumes:
+#      - recording-files-volume:/usr/src/app/RepackingProject/files
+      - ./RepackingProject/files:/usr/src/app/RepackingProject/files
+
+  flower:
+    image: mher/flower:0.9.7
+    command: ["flower", "--port=5555", "--url_prefix=flower"]
+    env_file:
+      - .docker.flower.env
+      - .docker.broker.env
+    expose:
+      - "5555"
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:8.0.3
+    restart: always
+    command: redis-server
+    expose:
+      - "6379"
+
+  postgres:
+    image: postgres:17.6
+    restart: unless-stopped
+    expose:
+      - "5432"
+    env_file:
+      - .docker.postgres.env
+    volumes:
+      - db-volume:/var/lib/postgresql/data/
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: always
+    expose:
+      - "9000"
+      - "8000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+#    environment:
+#      - TRUSTED_ORIGINS=127.0.0.1
+
+volumes:
+  db-volume:
+  recording-files-volume:
+  static-volume:
+  portainer_data:

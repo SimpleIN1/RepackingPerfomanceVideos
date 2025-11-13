@@ -16,12 +16,28 @@ def get_recording_orders(filter_query: Q) -> List[OrderRecordingModel]:
     return OrderRecordingModel.objects.filter(filter_query)
 
 
+def get_recording_orders_with_type_recording(filter_query: Q, fields: list) -> List[OrderRecordingModel]:
+    """
+    Извлечение заказов
+    :param filter_query:
+    :param fields:
+    :return:
+    """
+
+    return OrderRecordingModel \
+        .objects \
+        .select_related("type_recording") \
+        .filter(filter_query) \
+        .only(*fields)
+
+
 def update_recording_orders(filter_query: Q, **data) -> None:
     """
     Обновлeние заказов
     :param filter_query:
     :return:
     """
+
     with transaction.atomic():
         return OrderRecordingModel.objects.filter(filter_query).update(**data)
 

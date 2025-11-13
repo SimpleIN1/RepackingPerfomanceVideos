@@ -7,11 +7,12 @@
 {% block content %}
 <h1 style="margin:0 0 12px 0;font-size:20px;color:#0b1220;">Ваши видео успешно обработаны 🎉</h1>
 <p style="margin:0 0 18px 0;color:#39424a;line-height:1.5;">
-  Сервис <strong>{{ website_name }}</strong> завершил обработку ваших видеофайлов категории {{ type_name }}. Всего обработано: <strong>{{video_count}}</strong>.
+  Сервис <strong>{{ website_name }}</strong> завершил обработку ваших видеофайлов категории {{ type_name }}. Всего видеофайлов: <strong>{{video_count}}</strong>.
 </p>
 
   <div>Категория: <strong>{{type_name}}</strong></div>
   <div>Успешно обработано: <strong>{{video_count_success}}</strong></div>
+  <div>Отменено: <strong>{{video_count_cancelled}}</strong></div>
   <div>Неудачно: <strong>{{video_count_failed}}</strong></div>
 
 <p style="margin:18px 0 18px 0;color:#39424a;line-height:1.5;">

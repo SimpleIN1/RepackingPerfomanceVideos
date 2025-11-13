@@ -31,7 +31,13 @@ app.conf.task_routes = {
     'CeleryApp.tasks.remove_dirs_task': {
         'queue': 'common_worker_queue'
     },
+    'CeleryApp.tasks.check_count_processed_videos_periodic_task': {
+        'queue': 'common_worker_queue'
+    },
     'CeleryApp.tasks.repack_threads_video_task': {
+        'queue': 'ffmpeg_worker_queue'
+    },
+    'CeleryApp.tasks.terminate_process_task': {
         'queue': 'ffmpeg_worker_queue'
     },
     'CeleryApp.tasks.upload_processed_records': {
@@ -47,5 +53,9 @@ app.conf.beat_schedule = {
     'Check files and remove every 1.5 hour': {
         'task': 'CeleryApp.tasks.remove_expired_files_periodic_task',
         'schedule': 60*90,
+    },
+    'Check orders every 10 minutes': {
+        'task': 'CeleryApp.tasks.check_count_processed_videos_periodic_task',
+        'schedule': 60*10,
     },
 }

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pprint
 from typing import List, Tuple, Dict
 
 import httplib2
@@ -11,6 +12,7 @@ from httplib2.error import ServerNotFoundError
 from django.conf import settings
 from django.db.models import Q
 from django.db import transaction
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 
@@ -259,12 +261,12 @@ def get_recordings_to_dict_with_status(fields: List[str], filter_query: Q):
         .select_related("recording", "order") \
         .filter(filter_query)
 
-    print(RecordingModel.objects.all().filter(recordingtaskidmodel__order__user_id=1).query)
+    # print(RecordingModel.objects.all().filter(recordingtaskidmodel__order__user_id=1).query)
 
     return queryset
 
 
-def get_type_recordings_to_dict() -> List[TypeRecordingModel]:
+def get_type_recordings_to_dict(fields: list) -> List[TypeRecordingModel]:
     """
     Извлекает из базы данных типы конференций, преобразуя в словарь
     :return:
@@ -272,7 +274,7 @@ def get_type_recordings_to_dict() -> List[TypeRecordingModel]:
     queryset = TypeRecordingModel \
         .objects \
         .order_by("name") \
-        .values("id", "name")
+        .values(*fields)
     return queryset
 
 
@@ -346,17 +348,26 @@ def upload_recordings_to_db(data: dict) -> Dict | None:
         return
 
     TypeRecordingModel.objects.bulk_create(
-        data["type_recordings"], update_conflicts=True,
+        data["type_recordings"],
+        # update_conflicts=True,
+        ignore_conflicts=True,
         unique_fields=["name"], update_fields=["name"]
     )
 
+    type_recording_ids = []
     for key, recording in data["recordings"]:
         type_recording = TypeRecordingModel.objects.get(name=key)
+        type_recording_ids.append(type_recording.id)
         recording.type_recording = type_recording
+
+    for i in type_recording_ids:
+        cache.delete(settings.CACHE_PK_RECORDINGS.format(i))
 
     RecordingModel.objects.bulk_create(
         list(map(lambda x: x[1], data["recordings"])),
-        update_conflicts=True, unique_fields=["record_id"], update_fields=["record_id"]
+        # update_conflicts=True,
+        ignore_conflicts=True,
+        unique_fields=["record_id"], update_fields=["record_id"]
     )
 
     return data
@@ -420,6 +431,13 @@ def upload_recordings_from_source_without_duplicate(resource):
     if not empty_recordings:
         return None
 
+    type_recordings_db = set(map(lambda x: x.name, TypeRecordingModel.objects.all()))
+    type_recordings_names = set(map(lambda x: x.name, parse_xml_recordings(response)["type_recordings"]))
+    empty_type_recordings = type_recordings_names.difference(type_recordings_db)
+
+    if empty_type_recordings:
+        cache.delete(settings.CACHE_TYPE_RECORDINGS)
+
     creating_data = {
         "recordings": [],
         "type_recordings": []
@@ -428,6 +446,7 @@ def upload_recordings_from_source_without_duplicate(resource):
     for recording_id in empty_recordings:
         type_recording = recordings[recording_id]["type_recording"]
         creating_data["recordings"].append((type_recording.name, recordings[recording_id]["recording"]))
-        creating_data["type_recordings"].append(type_recording)
+
+    creating_data["type_recordings"] = [TypeRecordingModel(name=name) for name in empty_type_recordings]
 
     return upload_recordings_to_db(creating_data)

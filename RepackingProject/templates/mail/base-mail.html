@@ -26,17 +26,12 @@
             <td style="padding:20px 24px;background:linear-gradient(90deg,#0f1724,#0b1220);color:#fff;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td style="display: flex;
-                            align-items: center;
-                            gap: 10px;">
-                    <svg viewBox="0 0 24 24" style="width: 28px;
-                                                    height: 28px;
-                                                    fill: #b0b8c3;">
-                      <circle cx="12" cy="12" r="10" stroke="#3b82f6" stroke-width="2" fill="none"/>
-                      <path d="M12 6 L12 12 L16 14" stroke="#3b82f6" stroke-width="2" fill="none" stroke-linecap="round"/>
-                    </svg>
-                    <strong>{{ website_name }}</strong>
+
+                  <td style="vertical-align:middle;">
+                    <img src="{{ schema }}://{{ domain }}{% static 'assets/logo/logo/png' %}" alt="{{website_name}} logo" width="45" height="35" style="display:inline-block;border-radius:6px;vertical-align:middle;">
+                    <span style="margin-left:12px;font-weight:700;font-size:18px;vertical-align:middle;display:inline-block;">{{website_name}}</span>
                   </td>
+
                   <td style="text-align:right;vertical-align:middle;">
                     <span style="font-size:12px;opacity:0.85;">{% block headertitle %}{% endblock %}</span>
                   </td>
@@ -61,7 +56,7 @@
             <td style="padding:16px 20px;background:#fbfcfe;border-top:1px solid #eef2f6;text-align:center;color:#7b8790;font-size:12px;">
               <div style="margin-bottom:6px;">© 1990–2025. <a href="http://www.ict.nsc.ru/" style="color:var(--muted);">ФИЦ ИВТ</a>, г. Новосибирск.</div>
               <div style="font-size:11px;color:#9aa4ad;">
-                Если вы хотите отписаться от уведомлений — нажмите <a href="{{ schema }}://{{ domain }}/{% url 'not-found' %}" style="color:#2563eb;text-decoration:none;">здесь</a>.
+                Если вы хотите отписаться от уведомлений — нажмите <a href="{{ schema }}://{{ domain }}{% url 'not-found' %}" style="color:#2563eb;text-decoration:none;">здесь</a>.
               </div>
             </td>
           </tr>

@@ -37,7 +37,7 @@ ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS").split(',')
 INTERNAL_IPS = os.getenv("INTERNAL_IPS").split(',')
 
 CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS").split(',')
-# CORS_ORIGIN_WHITELIST = ["http://127.0.0.1:8000", ]
+CORS_ORIGIN_WHITELIST = os.getenv("CORS_ORIGIN_WHITELIST").split(',')
 
 # Application definition
 
@@ -55,7 +55,9 @@ INSTALLED_APPS = [
 ]
 
 if DEBUG:
+    SILKY_PYTHON_PROFILER = True
     INSTALLED_APPS.append('debug_toolbar')
+    INSTALLED_APPS.append('silk')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -68,6 +70,7 @@ MIDDLEWARE = [
 ]
 
 if DEBUG:
+    MIDDLEWARE.append("silk.middleware.SilkyMiddleware")
     MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
 
 ROOT_URLCONF = 'RepackingProject.urls'
@@ -99,8 +102,16 @@ WSGI_APPLICATION = 'RepackingProject.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        # 'ENGINE': 'django.db.backends.sqlite3',
+        # 'NAME': BASE_DIR / 'db.sqlite3',
+
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': os.getenv("POSTGRES_DB", "postgres_db"),
+        'USER': os.getenv("POSTGRES_USER", "postgres_user"),
+        'PASSWORD': os.getenv("POSTGRES_PASSWORD", "postgres_pass"),
+        'HOST': os.getenv("POSTGRES_HOST",),
+        'PORT': int(os.getenv("POSTGRES_PORT")),
+        'CONN_MAX_AGE': 60 * 10,
     }
 }
 
@@ -130,21 +141,21 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # if DEBUG:
 #     # Logging query language
-#     LOGGING = {
-#         'version': 1,
-#         'disable_existing_loggers': False,
-#         'handlers': {
-#             'console': {
-#                 'class': 'logging.StreamHandler',
-#             },
-#         },
-#         'loggers': {
-#             'django.db.backends': {
-#                 'level': 'DEBUG',
-#                 'handlers': ['console'],
-#             }
-#         },
-#     }
+    # LOGGING = {
+    #     'version': 1,
+    #     'disable_existing_loggers': False,
+    #     'handlers': {
+    #         'console': {
+    #             'class': 'logging.StreamHandler',
+    #         },
+    #     },
+    #     'loggers': {
+    #         'django.db.backends': {
+    #             'level': 'DEBUG',
+    #             'handlers': ['console'],
+    #         }
+    #     },
+    # }
 
 # Session settings
 if not "test" in sys.argv:
@@ -157,6 +168,8 @@ CACHES = {
         "LOCATION": os.getenv('CACHE_REDIS', "redis://localhost:6379/0"),
     }
 }
+CACHE_TYPE_RECORDINGS = "type_recordings"
+CACHE_PK_RECORDINGS = "{}-recordings"
 
 
 # Internationalization
@@ -230,6 +243,7 @@ CONFIRMATION_CODE_SESSION = "confirm-code"
 REDIS_KEY_CHECKER = "rediskeyckecker"
 REDIS_KEY_ORDER_PROCESSED = "order-{}"
 REDIS_KEY_ORDER_FAILED = "order-{}-failed"
+REDIS_KEY_ORDER_CANCELLED = "order-{}-cancelled"
 
 KIND_CODE_2FA = "2fa"
 KIND_CODE_EMAIL = "email"

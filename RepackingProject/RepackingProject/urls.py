@@ -34,5 +34,6 @@ urlpatterns = [
 
 if conf.DEBUG:
     urlpatterns += [path("__debug__/", include("debug_toolbar.urls"))]
+    urlpatterns += [path("silk/", include("silk.urls"))]
     urlpatterns += static(conf.STATIC_URL, document_root=conf.STATIC_ROOT)
     urlpatterns += static(conf.MEDIA_URL, document_root=conf.MEDIA_ROOT)

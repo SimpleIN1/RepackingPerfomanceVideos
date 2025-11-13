@@ -13,6 +13,8 @@ urlpatterns = [
     path("api/records/upload/", views.UploadRecordingsAPIView.as_view(), name="repacking-api-upload-records"),
     path("api/rooms/", views.RoomsAPIView.as_view(), name="repacking-api-rooms"),
 
+    path("api/test/", views.TestAPIView.as_view(), name="test"),
+
     path("download/", views.DownloadView.as_view(), name="repacking-downloads"),
     path("download/<int:id>/", views.DownloadFileView.as_view(), name="repacking-downloads-id"),
 ]

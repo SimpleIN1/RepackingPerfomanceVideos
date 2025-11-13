@@ -130,6 +130,7 @@
     }
 
     let activeRoom=null, visibleRecords=[], selectedIds=new Set(), lastClickedIndex=null;
+    var roomId;
 
     const roomsList = document.getElementById('roomsList');
     const recordsList = document.getElementById('recordsList');
@@ -177,6 +178,13 @@
         });
     }
 
+    document.addEventListener('keydown', function(event) {
+      if (event.ctrlKey && event.keyCode === 116) {
+        localStorage.setItem("roomId", data.rooms[0].id);
+      }
+    });
+
+
     document.getElementById('roomSearch').addEventListener('input', e => {
       const q = e.target.value.toLowerCase();
       Array.from(roomsList.children).forEach(li => {
@@ -190,6 +198,9 @@
         Array.from(roomsList.children).forEach(li => {
           li.classList.toggle('active', li.dataset.id === id)
         });
+
+        localStorage.setItem("roomId", id)
+
         sendRequestRecordings(id);
     }
 
@@ -338,6 +349,11 @@
            const dateUTC = new Date(item.datetime_created).toISOString().split('T')[0]
            const duration = new Date((new Date(item.datetime_stopped) - new Date(item.datetime_created))).toUTCString().split(' ')[4]
 
+           let foundRecording = null;
+           if (data.records[pk]) {
+             foundRecording = data.records[pk].find(recording => recording.id == item.record_id);
+           }
+
            list.push({
             id: item.record_id,
             date:date,
@@ -346,7 +362,7 @@
             title:`Заседание ${date} ${time}`,
             duration: duration,
             size:`${Math.floor(Math.random()*400+100)} МБ`,
-            status: 1,
+            status: (foundRecording ? foundRecording.status : 1),
             url: item.url,
           });
         });
@@ -413,7 +429,16 @@
         });
         renderRooms();
         attachButtons();
-        setActiveRoom(data.rooms[0].id);
+        //setActiveRoom(data.rooms[0].id);
+
+        let tmpRoomId = localStorage.getItem("roomId")
+        if (!tmpRoomId) {
+          roomId = data.rooms[0].id
+          localStorage.setItem("roomId", roomId)
+        } else  {
+          roomId = tmpRoomId;
+        }
+        setActiveRoom(roomId);
       })
       .catch(error => {
           console.log('Error:', error);

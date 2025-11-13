@@ -1,5 +1,6 @@
 import os
 import shutil
+import zipfile
 
 
 class Archiving:
@@ -25,4 +26,7 @@ class ArchivingUnpack:
     def unpack_archive(self) -> None:
         extract_dir = os.path.basename(self.path).split('.')[0]
         path_save = os.path.join(os.path.dirname(self.path), extract_dir)
-        shutil.unpack_archive(self.path, path_save)
+
+        with zipfile.ZipFile(self.path, 'r') as zip_ref:
+            zip_ref.extractall(path_save)
+        # shutil.unpack_archive(self.path, path_save)

@@ -1,4 +1,5 @@
 import json
+import logging
 from http import HTTPStatus
 
 from django.views import View
@@ -10,12 +11,14 @@ from django.forms.models import model_to_dict
 from django.shortcuts import render, redirect
 from django.contrib.sessions.models import Session
 from django.template.loader import render_to_string
+from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.sessions.backends.db import SessionStore
 from django.views.generic.edit import CreateView, UpdateView
+from silk.profiling.profiler import silk_profile
 
 from AccountApp import forms
 from AccountApp.services.user import get_user, change_password_by_user_id_from_session
@@ -31,6 +34,7 @@ class LoginView(View):
     template_name = "account/login.html"
     form_class = forms.LoginForm
 
+    # @method_decorator(cache_page(60 * 60 * 12), name='dispatch')
     def get(self, request):
         context = {"form": self.form_class()}
 
@@ -86,6 +90,7 @@ class Login2FAView(View):
                     request.session.session_key = session_id
             except Session.DoesNotExist:
                 return redirect("not_found")
+
         if request.user.is_authenticated:
             return redirect("repacking-records")
 

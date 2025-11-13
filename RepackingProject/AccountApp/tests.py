@@ -748,8 +748,8 @@ class UserServiceTests(TestCase):
             "middle_name": "middle name user1",
             "is_active": True,
         }
-        update_user_by_pk(pk=1, **data)
-        updated_user = UserModel.objects.get(pk=1)
+        update_user_by_pk(pk=self.user.id, **data)
+        updated_user = UserModel.objects.get(pk=self.user.id)
         updated_data = {
             "username": updated_user.username,
             "last_name": updated_user.last_name,

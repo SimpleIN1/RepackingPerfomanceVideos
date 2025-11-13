@@ -9,8 +9,8 @@
 !**/migrations
 !**/migrations/__init__.py
 
+**/static/admin
 **/static/assets/images
-**/static/assets/css/style.css
 **/media/
 
 **/*.sqlite3

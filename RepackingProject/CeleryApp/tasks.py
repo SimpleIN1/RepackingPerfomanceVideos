@@ -16,10 +16,12 @@ from AccountApp.services.user import get_user
 from CeleryApp.app import app
 from common.archive import Archiving, ArchivingUnpack
 from common.nextcloud import upload_to_nextcloud
+from common.process_termination import terminate_process
 from common.redis_conn import get_redis_connection
 from common.mail.email_user import NotifyEmailUser
 from RepackingApp.services.record_task import update_recording_tasks
-from RepackingApp.services.order_record import update_recording_orders
+from RepackingApp.services.order_record import update_recording_orders, get_recording_orders, \
+    get_recording_orders_with_type_recording
 from RepackingApp.services.notify_email_user import send_processed_video_notify_email
 from RepackingApp.services.downloads import create_recording_file, delete_recording_files, get_recording_files
 from RepackingApp.services.records import update_recording_by_record_id, \
@@ -64,7 +66,7 @@ def send_mail_use_broker_task(
 
 @app.task(bind=True)
 def repack_threads_video_task(
-        self, resource, type_recording_id, recording_id, user_id, order_id, order_count
+    self, resource, type_recording_id, recording_id, user_id, order_id, order_count
 ):
     """
     Перепакова видео через отложенный вызов
@@ -75,16 +77,15 @@ def repack_threads_video_task(
     :return: None
     """
 
+    # Создаем REDIS соединение для ведения подсчета обработанных файлов
+
+    r = get_redis_connection()
+
     # Извелаем пользователя для проверки возможности загрузки и отправки эп.
 
     user = get_user(pk=user_id)
 
     logging.info(f"Start process {resource}, {recording_id}")
-
-    # Создаем REDIS соединение для ведея подсчета обработанных файлов
-
-    r = get_redis_connection()
-    r.incr(settings.REDIS_KEY_ORDER_PROCESSED.format(order_id))
 
     # Обновление статуса задачи на "обрабатывается"
 
@@ -93,15 +94,16 @@ def repack_threads_video_task(
     )
 
     recordings = get_recordings_foreinkey_type_recording(Q(record_id=recording_id))
+    first_recording = recordings[0]
 
-    fname_datetime = recordings[0].datetime_created.astimezone(settings.TIME_ZONE_PYTZ).strftime('%Y-%m-%dT%H:%M')
+    fname_datetime = first_recording.datetime_created.astimezone(settings.TIME_ZONE_PYTZ).strftime('%Y-%m-%dT%H:%M')
     fname = f"{fname_datetime}.mp4"
     unique_fdir = f"{fname_datetime}-{str(time.time()).replace('.', '')}"
     fname_popcorn = f"popcorn.xml"
 
     local_source_dir = f"files/ffmpeg/{unique_fdir}"
     local_source_file = f"{local_source_dir}/{fname}"
-    remote_dir = f"{recordings[0].type_recording.name}/{unique_fdir}"
+    remote_dir = f"{first_recording.type_recording.name}/{unique_fdir}"
 
     # Добавляем идентификатор задачи и процессорное имя,
     # чтобы можно было завершить задачу
@@ -122,8 +124,8 @@ def repack_threads_video_task(
                 "-i", recording_id,
                 "-o", local_source_file
             ],
-            # stdout=subprocess.DEVNULL,
-            # stderr=subprocess.STDOUT,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT,
             check=True
         )
 
@@ -174,6 +176,9 @@ def repack_threads_video_task(
         shutil.rmtree(local_source_dir)
 
         logging.info(f"Stop process {resource}, {recording_id}")
+
+        r.incr(settings.REDIS_KEY_ORDER_PROCESSED.format(order_id))
+
     except (FileNotFoundError, subprocess.CalledProcessError) as f:
         logging.error(f)
 
@@ -189,34 +194,6 @@ def repack_threads_video_task(
         r.save()
 
         shutil.rmtree(local_source_dir)
-
-    # Отправка уведомления об обработанных файлах.
-    # Извлекаются количественные параметры обработки: сколько обработано,
-    # сколько неудачно обработанных файлов.
-    # Делается запрос в базу данных, чтобы получить тип конференции.
-    # Формируется объект с параметрами для отправки по эп.
-
-    count_encode = r.get(settings.REDIS_KEY_ORDER_PROCESSED.format(order_id))
-    count = int(count_encode.decode("utf-8")) if count_encode else 0
-
-    if count == order_count:
-        logging.info(f"Count {count} PROCESSED")
-        count_failed_encode = r.get(settings.REDIS_KEY_ORDER_FAILED.format(order_id))
-        count_failed = int(count_failed_encode.decode("utf-8")) if count_failed_encode else 0
-
-        type_recording = get_type_recording_by_id(type_recording_id)
-
-        update_recording_orders(Q(pk=order_id), count_failed=count_failed, processed=True)
-        from common.mail.mail import NotifyProcessedRecordsEmail
-        nm = NotifyEmailUser(video_count=count,
-                             video_count_failed=count_failed,
-                             type_name=type_recording.name,
-                             user=user,
-                             session=None,
-                             kind=None,
-                             api_call="repacking-downloads",
-                             callback=NotifyProcessedRecordsEmail)
-        send_processed_video_notify_email(nm)
 
 
 @app.task
@@ -259,7 +236,14 @@ def upload_processed_records(task_id, user_id, type_recording_name, local_source
             )
         except FileNotFoundError as f:
             logging.error(f)
-            shutil.rmtree(local_source_dir)
+            logging.warning("PASS PASS PASS")
+
+            if os.path.exists(local_source_dir):
+                shutil.rmtree(local_source_dir)
+
+            update_recording_tasks(
+                Q(task_id=task_id), status=6
+            )
 
 
 @app.task
@@ -286,7 +270,7 @@ def remove_expired_files_periodic_task():
         datetime_created__lte=
         datetime.datetime.now(datetime.timezone.utc)
         -
-        datetime.timedelta(days=7)
+        datetime.timedelta(days=1)
     )
     logging.info("Get recordings files")
     recording_files = get_recording_files(query_filter)
@@ -297,7 +281,8 @@ def remove_expired_files_periodic_task():
         logging.info("Start remove files from storage")
         for item in recording_files:
             logging.info(f"Remove {item.file}")
-            os.remove(item.file)
+            if os.path.exists(item.file):
+                os.remove(item.file)
 
         logging.info("Start remove files from db")
         delete_recording_files(query_filter)
@@ -314,13 +299,100 @@ def remove_dirs_task(dirnames):
     :param dirnames:
     :return:
     """
-
     logging.info("Start remove dir task")
-    for dirname in dirnames:
-        logging.info(f"Remove {dirname}")
-        shutil.rmtree(dirname)
+
+    try:
+        for dirname in dirnames:
+            logging.info(f"Remove {dirname}")
+            if os.path.exists(dirname):
+                shutil.rmtree(dirname)
+    except FileNotFoundError as e:
+        logging.error(e)
+
     logging.info("Stop remove dir task")
 
-###   кэширование
-###   deploy
-###   readme
+
+@app.task
+def terminate_process_task(tasks):
+    """
+    Завершение celery процессов.
+    :param tasks:
+    :return:
+    """
+
+    logging.info("Start terminate_process_task")
+
+    dirnames = []
+    with get_redis_connection() as r:
+        for task_id in tasks:
+            process_name = r.get(task_id)
+            logging.info(f"Stop PROCESS {process_name}")
+            r.delete(task_id)
+            if process_name:
+                process_name = process_name.decode('utf-8')
+                terminate_process(process_name)
+                dirnames.append(process_name)
+
+    if dirnames:
+        remove_dirs_task.delay(dirnames)
+
+    logging.info("Stop terminate_process_task")
+
+
+@app.task
+def check_count_processed_videos_periodic_task():
+    """
+    Отправка уведомления об обработанных файлах.
+    Извлекаются количественные параметры обработки: сколько обработано,
+    сколько неудачно обработанных файлов.
+    Делается запрос в базу данных, чтобы получить тип конференции.
+    Формируется объект с параметрами для отправки по эп.
+    :return:
+    """
+
+    logging.info("Start check_count_processed_videos_periodic_task")
+    orders = get_recording_orders_with_type_recording(Q(processed=False), fields=["type_recording__name"])
+
+    if not orders:
+        return
+
+    r = get_redis_connection()
+
+    for order in orders:
+
+        count_encode = r.get(settings.REDIS_KEY_ORDER_PROCESSED.format(order.id))
+        count = int(count_encode.decode("utf-8")) if count_encode else 0
+
+        count_cancelled_encode = r.get(settings.REDIS_KEY_ORDER_CANCELLED.format(order.id))
+        count_cancelled = int(count_cancelled_encode.decode("utf-8")) if count_cancelled_encode else 0
+
+        count_failed_encode = r.get(settings.REDIS_KEY_ORDER_FAILED.format(order.id))
+        count_failed = int(count_failed_encode.decode("utf-8")) if count_failed_encode else 0
+
+        logging.warning(f"order_id {order.id}, {order.count}, count_cancelled {count_cancelled}, count proc {count}, count_failed {count_failed}")
+
+        if order.count == count + count_cancelled + count_failed:
+            logging.info(f"Count {count} PROCESSED order {order.id}")
+
+            r.delete(settings.REDIS_KEY_ORDER_FAILED.format(order.id))
+            r.delete(settings.REDIS_KEY_ORDER_CANCELLED.format(order.id))
+            r.save()
+
+            update_recording_orders(Q(pk=order.id), count_failed=count_failed,
+                                    count_canceled=count_cancelled, processed=True)
+
+            if count > 0:
+                from common.mail.mail import NotifyProcessedRecordsEmail
+                nm = NotifyEmailUser(video_count=order.count,
+                                     video_count_failed=count_failed,
+                                     video_count_cancelled=count_cancelled,
+                                     type_name=order.type_recording.name,
+                                     user=order.user,
+                                     session=None,
+                                     kind=None,
+                                     api_call="repacking-downloads",
+                                     callback=NotifyProcessedRecordsEmail)
+                send_processed_video_notify_email(nm)
+
+    logging.info(f"Stop {order.id} check_count_processed_videos_periodic_task")
+

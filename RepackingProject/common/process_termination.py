@@ -16,7 +16,7 @@ def terminate_process(process_name):
     #     os.kill(pid, signal.SIGKILL)
 
     try:
-        os.system(f"pkill -9 -f '{process_name}'")
+        print(os.system(f"pkill -9 -f '{process_name}'"))
     except ProcessLookupError:
         print(f"Процесс с именем {process_name} не найден.")
 

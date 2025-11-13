@@ -29,7 +29,7 @@
             <td>{{ item.recording_task.recording.datetime_created|date:"H:i" }}</td>
             <td>{{ item.file_size|filesizeformat }}</td>
             <td>
-              <a class="btn" href="{% url 'repacking-downloads-id' id=item.id %}" download="">Скачать</a>
+              <a class="btn" href="{% url 'repacking-downloads-id' id=item.id %}">Скачать</a>
             </td>
           </tr>
           {% endfor %}

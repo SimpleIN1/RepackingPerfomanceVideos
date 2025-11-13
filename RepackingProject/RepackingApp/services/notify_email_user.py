@@ -15,7 +15,8 @@ def send_processed_video_notify_email(nm_user: NotifyEmailUser):
     videos_url = f"{settings.SCHEMA}://{settings.DOMAIN}{str(reverse_lazy(nm_user.api_call))}?session_id={session_id}"
     context = {
         "video_count": nm_user.video_count,
-        "video_count_success": nm_user.video_count-nm_user.video_count_failed,
+        "video_count_success": nm_user.video_count-nm_user.video_count_failed-nm_user.video_count_cancelled,
+        "video_count_cancelled": nm_user.video_count_cancelled,
         "video_count_failed": nm_user.video_count_failed,
         "type_name": nm_user.type_name,
         "videos_url": videos_url,

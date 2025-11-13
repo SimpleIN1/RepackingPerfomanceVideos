@@ -51,7 +51,7 @@ class RecodingFileUserModelAdmin(admin.ModelAdmin):
 
 @admin.register(OrderRecordingModel)
 class OrderRecordingModelAdmin(admin.ModelAdmin):
-    list_display = ("count", "count_failed", "count_canceled", "uuid", "user", "processed")
+    list_display = ("id", "count", "count_failed", "count_canceled", "uuid", "user", "processed")
     list_filter = ("processed", )
 
     def has_change_permission(self, request, obj=None):

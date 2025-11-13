@@ -1,5 +1,6 @@
 import datetime
 import os
+import pprint
 import subprocess
 import time
 import uuid
@@ -91,7 +92,6 @@ class RepackingServiceTests(TestCase):
         tree2 = etree.fromstring(self.content_error)
         self.xml_test = tree2
 
-
         self.user_data = {
             "username": "user",
             "email": "user@mail.ru",
@@ -100,11 +100,6 @@ class RepackingServiceTests(TestCase):
             "password": "passwoRd4_",
         }
         self.user = UserModel.objects.create_user(**self.user_data)
-        self.one_data_order = {
-            "count": 20,
-            "user_id": self.user.id
-        }
-        self.order = OrderRecordingModel.objects.create(**self.one_data_order)
 
     def test_request_records(self):
         url = "https://vcs-3.ict.sbras.ru/bigbluebutton/api/getRecordings?limit=7&offset=2"
@@ -210,11 +205,15 @@ class RepackingServiceTests(TestCase):
         data = parse_xml_recordings(self.content)
         upload_recordings_to_db(data)
 
-        type_recordings = get_type_recordings_to_dict()
+        type_recordings = get_type_recordings_to_dict(["name"])
         self.assertEqual(len(type_recordings), 5)
 
         res = [type_recording for type_recording in type_recordings]
-        expected = [{'id': 5, 'name': 'test3 room'}, {'id': 7, 'name': 'Голопапа Денис Юрьевич (ФИЦ ИВТ)'}, {'id': 1, 'name': 'Информационные технологии в задачах филологии и компьютерной лингвистики'}, {'id': 6, 'name': 'Семинар 11:00'}, {'id': 2, 'name': 'Семинар ИВТ 16-00'}]
+        expected = [{'name': 'test3 room'},
+                    {'name': 'Голопапа Денис Юрьевич (ФИЦ ИВТ)'},
+                    {'name': 'Информационные технологии в задачах филологии и компьютерной лингвистики'},
+                    {'name': 'Семинар 11:00'},
+                    {'name': 'Семинар ИВТ 16-00'}]
 
         self.assertEqual(res, expected)
 
@@ -253,7 +252,10 @@ class RepackingServiceTests(TestCase):
         data = parse_xml_recordings(self.content)
         upload_recordings_to_db(data)
 
-        pk = 1
+        name = "Информационные технологии в задачах филологии и компьютерной лингвистики"
+        type_recording = TypeRecordingModel.objects.get(name=name)
+
+        pk = type_recording.id
         recordings = get_recordings_foreinkey_type_recording(Q(type_recording__id=pk))
 
         self.assertEqual(len(recordings), 2)
@@ -263,7 +265,10 @@ class RepackingServiceTests(TestCase):
         data = parse_xml_recordings(self.content)
         upload_recordings_to_db(data)
 
-        pk = 1
+        name = "Информационные технологии в задачах филологии и компьютерной лингвистики"
+        type_recording = TypeRecordingModel.objects.get(name=name)
+
+        pk = type_recording.id
         fields = ["record_id", "meeting_id", "datetime_created", "datetime_stopped", "type_recording", "url"]
         recordings = get_recordings_to_dict(
             fields=fields,
@@ -281,6 +286,13 @@ class RepackingServiceTests(TestCase):
 
         tmp_recordings = RecordingModel.objects.all()[:2]
 
+        self.one_data_order = {
+            "count": 20,
+            "user_id": self.user.id,
+            "type_recording_id": tmp_recordings[0].type_recording_id
+        }
+        self.order = OrderRecordingModel.objects.create(**self.one_data_order)
+
         tmp_recording_ids = [tmp_recording.record_id for tmp_recording in tmp_recordings]
         for r in tmp_recordings:
             uid = uuid.uuid4()
@@ -292,8 +304,8 @@ class RepackingServiceTests(TestCase):
             fields=fields,
             filter_query=Q(order__user_id=self.user.id)
         )
-        for item in recordings:
-            print(item)
+        # for item in recordings:
+        #     print(item)
 
         self.assertEqual(len(recordings), 2)
 
@@ -594,6 +606,12 @@ class RecordingTaskTests(TestCase):
         upload_recordings_to_db(data)
         tmp_recording = RecordingModel.objects.get(record_id=recording.record_id)
 
+        self.one_data_order = {
+            "count": 20,
+            "user_id": self.user.id,
+            "type_recording_id": tmp_recording.type_recording_id
+        }
+        self.order = OrderRecordingModel.objects.create(**self.one_data_order)
         uid = uuid.uuid4()
         create_recording_task(recording=tmp_recording, task_id=uid, order=self.order)
 
@@ -610,6 +628,12 @@ class RecordingTaskTests(TestCase):
         upload_recordings_to_db(data)
         tmp_recording = RecordingModel.objects.get(record_id=recording.record_id)
 
+        self.one_data_order = {
+            "count": 20,
+            "user_id": self.user.id,
+            "type_recording_id": tmp_recording.type_recording_id
+        }
+        self.order = OrderRecordingModel.objects.create(**self.one_data_order)
         uid = uuid.uuid4()
         create_recording_task(recording=tmp_recording, task_id=str(uid), order=self.order)
 
@@ -637,6 +661,12 @@ class RecordingTaskTests(TestCase):
 
         tmp_recordings = RecordingModel.objects.all()[:2]
 
+        self.one_data_order = {
+            "count": 20,
+            "user_id": self.user.id,
+            "type_recording_id": tmp_recordings[0].type_recording_id
+        }
+        self.order = OrderRecordingModel.objects.create(**self.one_data_order)
         tmp_recording_ids = [tmp_recording.record_id for tmp_recording in tmp_recordings]
         for r in tmp_recordings:
             uid = uuid.uuid4()
@@ -656,6 +686,12 @@ class RecordingTaskTests(TestCase):
         upload_recordings_to_db(data)
         tmp_recording = RecordingModel.objects.get(record_id=recording.record_id)
 
+        self.one_data_order = {
+            "count": 20,
+            "user_id": self.user.id,
+            "type_recording_id": tmp_recording.type_recording_id
+        }
+        self.order = OrderRecordingModel.objects.create(**self.one_data_order)
         uid = uuid.uuid4()
         create_recording_task(recording=tmp_recording, task_id=uid, order=self.order)
 
@@ -679,6 +715,12 @@ class RecordingTaskTests(TestCase):
 
         tmp_recordings = RecordingModel.objects.all()[:3]
 
+        self.one_data_order = {
+            "count": 20,
+            "user_id": self.user.id,
+            "type_recording_id": tmp_recordings[0].type_recording_id
+        }
+        self.order = OrderRecordingModel.objects.create(**self.one_data_order)
         l = []
         for r in tmp_recordings:
             uid = uuid.uuid4()
@@ -705,7 +747,7 @@ class StartSubProcessTests():
             ],
             stdout=subprocess.DEVNULL
         )
-        print(opid)
+        # print(opid)
         self.assertIsNotNone(None)
 
 

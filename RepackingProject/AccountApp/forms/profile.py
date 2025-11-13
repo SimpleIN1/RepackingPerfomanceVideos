@@ -55,10 +55,7 @@ class BaseInfoProfilePOSTForm(BaseInfoProfileGETForm):
         return email
 
     def save(self, user):
-        user.last_name = self.cleaned_data["last_name"]
-        user.first_name = self.cleaned_data["first_name"]
-        user.middle_name = self.cleaned_data["middle_name"]
-        user.save()
+        update_user_by_pk(user.id, **self.cleaned_data)
 
 
 class ChangePasswordProfileForm(forms.Form):
@@ -118,7 +115,7 @@ class ChangePasswordProfileForm(forms.Form):
 
     def save(self, user):
         user.set_password(self.cleaned_data["password"])
-        user.save()
+        update_user_by_pk(user.id, password=user.password)
 
 
 class SecurityProfileForm(forms.Form):
@@ -130,5 +127,4 @@ class SecurityProfileForm(forms.Form):
     )
 
     def save(self, user):
-        user.two_factor_auth = self.cleaned_data["two_factor_auth"]
-        user.save()
+        update_user_by_pk(user.id, two_factor_auth=self.cleaned_data["two_factor_auth"])
