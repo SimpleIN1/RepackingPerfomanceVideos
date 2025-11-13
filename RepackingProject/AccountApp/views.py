@@ -18,7 +18,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.sessions.backends.db import SessionStore
 from django.views.generic.edit import CreateView, UpdateView
-from silk.profiling.profiler import silk_profile
+# from silk.profiling.profiler import silk_profile
 
 from AccountApp import forms
 from AccountApp.services.user import get_user, change_password_by_user_id_from_session
