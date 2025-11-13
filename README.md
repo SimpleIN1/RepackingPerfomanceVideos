@@ -184,25 +184,46 @@ file .docker.flower.env:
 
     FLOWER_BASIC_AUTH=user:pswd
 
+file .docker.nginx.env
+
+    SERVER_NAME=localhost
+    SSL_CERTIFICATE_PATH=/etc/letsencrypt/localhost/localhost.crt
+    SSL_CERTIFICATE_KEY_PATH=/etc/letsencrypt/localhost/localhost.key
+
+file docker-certbot.env
+    
+    EMAIL=test@mail.ru
+    SERVER_NAME=localhost
+
+## Docker + Certbot
+
+Run docker certbot service
+
+    docker-compose -f docker-compose.certbot.yml --env-file docker-certbot.env up
+
 ## Docker
 
 Docker build:
     
-    docker-compose -f docker-compose.yml up -d
+    docker-compose -f docker-compose.prod.yml up -d
+
+Docker debug build:
+    
+    docker-compose -f docker-compose.dev.yml up -d
 
 Run migrations in container:
 
-    docker-compose -f docker-compose.yml exec server ../venv/bin/python manage.py makemigration [AppName]
-    docker-compose -f docker-compose.yml exec server ../venv/bin/python manage.py migrate
+    docker-compose -f docker-compose.prod.yml exec server ../venv/bin/python manage.py makemigration [AppName]
+    docker-compose -f docker-compose.prod.yml exec server ../venv/bin/python manage.py migrate
 
 Run create superuser in container:
     
-    docker-compose -f docker-compose.yml exec server ../venv/bin/python manage.py createsuperuser
+    docker-compose -f docker-compose.prod.yml exec server ../venv/bin/python manage.py createsuperuser
 
 Run load staticfiles to admin panel in container:
  
-    docker-compose -f docker-compose.yml exec server ../venv/bin/python manage.py collectstaic
+    docker-compose -f docker-compose.prod.yml exec server ../venv/bin/python manage.py collectstaic
 
 Run uploading recording from a resource in container:
     
-    docker-compose -f docker-compose.yml exec server  ../venv/bin/python manage.py upload_recordings
+    docker-compose -f docker-compose.prod.yml exec server  ../venv/bin/python manage.py upload_recordings
