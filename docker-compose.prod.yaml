@@ -43,7 +43,7 @@ services:
       context: .
       dockerfile: dockerfile/celery.ffmpeg.Dockerfile
     restart: unless-stopped
-    command: bash -c '/usr/src/app/venv/bin/celery -A CeleryApp.app worker --loglevel=debug -c 1 -Q ffmpeg_worker_queue -n ffmpeg-worker'
+    command: bash -c '/usr/src/app/venv/bin/celery -A CeleryApp.app worker --loglevel=info -c 1 -Q ffmpeg_worker_queue -n ffmpeg-worker'
     depends_on:
       - redis
     env_file:
@@ -59,7 +59,7 @@ services:
       dockerfile: dockerfile/Dockerfile
       target: celery
     restart: unless-stopped
-    command: bash -c '/usr/src/app/venv/bin/celery -A CeleryApp.app worker --beat --loglevel=debug -c 4 -Q common_worker_queue -n common-worker'
+    command: bash -c '/usr/src/app/venv/bin/celery -A CeleryApp.app worker --beat --loglevel=info -c 4 -Q common_worker_queue -n common-worker'
     depends_on:
       - redis
     env_file:
@@ -75,7 +75,7 @@ services:
       dockerfile: dockerfile/Dockerfile
       target: celery
     restart: unless-stopped
-    command: bash -c '/usr/src/app/venv/bin/celery -A CeleryApp.app worker --loglevel=debug -c 1 -Q upload_worker_queue -n upload-worker'
+    command: bash -c '/usr/src/app/venv/bin/celery -A CeleryApp.app worker --loglevel=info -c 1 -Q upload_worker_queue -n upload-worker'
     depends_on:
       - redis
     env_file:
