@@ -39,6 +39,17 @@ def get_recording_order_tasks(filter_query: Q) -> List[RecordingTaskIdModel]:
     return RecordingTaskIdModel.objects.select_related("order").filter(filter_query)
 
 
+def get_recording_order_tasks_distinct_record(filter_query: Q) -> List[RecordingTaskIdModel]:
+    """
+    Извлечение recording тасок
+    # .select_related("order") на order автоматом подствился inner join блятсво
+    :param filter_query:
+    :return:
+    """
+
+    return RecordingTaskIdModel.objects.filter(filter_query).distinct("recording_id").only("recording_id")
+
+
 def update_recording_tasks(filter_query: Q, **data) -> None:
     """
     Обновлeние recording тасок

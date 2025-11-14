@@ -49,8 +49,8 @@ services:
       - .docker.broker.env
       - .docker.env
     volumes:
-#      - recording-files-volume:/usr/src/app/RepackingProject/files
-      - ./RepackingProject/files:/usr/src/app/RepackingProject/files
+      - recording-files-volume:/usr/src/app/RepackingProject/files
+#      - ./RepackingProject/files:/usr/src/app/RepackingProject/files
 
   celery-worker-2:
     build:

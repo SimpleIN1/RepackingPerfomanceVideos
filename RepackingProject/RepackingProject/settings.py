@@ -55,9 +55,9 @@ INSTALLED_APPS = [
 ]
 
 if DEBUG:
-    SILKY_PYTHON_PROFILER = True
+    # SILKY_PYTHON_PROFILER = True
     INSTALLED_APPS.append('debug_toolbar')
-    INSTALLED_APPS.append('silk')
+    # INSTALLED_APPS.append('silk')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -70,7 +70,7 @@ MIDDLEWARE = [
 ]
 
 if DEBUG:
-    MIDDLEWARE.append("silk.middleware.SilkyMiddleware")
+    # MIDDLEWARE.append("silk.middleware.SilkyMiddleware")
     MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
 
 ROOT_URLCONF = 'RepackingProject.urls'

@@ -26,10 +26,11 @@ from RepackingApp.services.downloads import get_recording_files, get_download_re
     get_recording_files_for_upload
 from RepackingApp.services.order_record import create_recording_order
 from RepackingApp.services.record_task import create_recording_task, delete_recordings_tasks, get_recording_tasks, \
-    create_recording_tasks, update_recording_tasks, get_recording_tasks_status, get_recording_tasks_left_outer_recording
+    create_recording_tasks, update_recording_tasks, get_recording_tasks_status, \
+    get_recording_tasks_left_outer_recording, get_recording_order_tasks, get_recording_order_tasks_distinct_record
 from RepackingApp.services.records import get_type_recordings, \
     get_recordings_to_dict, \
-    get_type_recordings_to_dict
+    get_type_recordings_to_dict, get_recordings_foreinkey_type_recording, get_recordings
 from common.redis_conn import get_redis_connection
 
 
@@ -103,10 +104,18 @@ class ProcessRecordingsAPIView(LoginRequiredMixin, View):
 
         recording_ids = form.cleaned_data["recording_ids"].split(',')
 
-        recordings = get_recording_tasks_left_outer_recording(
-            Q(record_id__in=recording_ids) & ~Q(recordingtaskidmodel__status__in=[2, 3])
+        ## left outer join
+        # recordings = get_recording_tasks_left_outer_recording(
+        #     Q(record_id__in=recording_ids) & ~Q(recordingtaskidmodel__status__in=[2, 3])
+        # )
+        # recordings = list(recordings)
+
+        recording_tasks = get_recording_order_tasks_distinct_record(
+            Q(recording_id__in=recording_ids) & Q(order__user_id=request.user.id) & Q(status__in=[2, 3])
         )
-        recordings = list(recordings)
+        rids = [item.recording_id for item in recording_tasks]
+        clean_recording_ids = list(set(recording_ids).difference(rids))
+        recordings = get_recordings(Q(record_id__in=clean_recording_ids)).only("record_id", "type_recording_id", "url")
 
         if not recordings:
             return HttpResponse(
@@ -121,23 +130,23 @@ class ProcessRecordingsAPIView(LoginRequiredMixin, View):
                 status=HTTPStatus.OK
             )
 
-        clean_recording_ids = [recording["record_id"] for recording in recordings]
+        # clean_recording_ids = [recording.record_id for recording in recordings]
 
         order = create_recording_order(count=len(clean_recording_ids), user_id=request.user.id,
-                                       type_recording_id=recordings[0]["type_recording"])
+                                       type_recording_id=recordings[0].type_recording_id)
 
         recording_task_list = []
         for recording in recordings:
-            resource = urlsplit(recording["url"]).netloc
+            resource = urlsplit(recording.url).netloc
 
             task = repack_threads_video_task.delay(resource=resource,
                                                    type_recording_id=order.type_recording_id,
-                                                   recording_id=recording["record_id"],
+                                                   recording_id=recording.record_id,
                                                    user_id=request.user.id,
                                                    order_id=order.id,
                                                    order_count=order.count)
             recording_task_list.append(
-                RecordingTaskIdModel(recording_id=recording["record_id"], task_id=task, order=order, status=2)
+                RecordingTaskIdModel(recording_id=recording.record_id, task_id=task, order=order, status=2)
             )
 
         create_recording_tasks(recording_task_list)
