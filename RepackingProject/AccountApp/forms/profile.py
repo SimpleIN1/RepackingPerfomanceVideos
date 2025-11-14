@@ -90,6 +90,7 @@ class ChangePasswordProfileForm(forms.Form):
 
     def clean_password(self):
         password = self.cleaned_data["password"]
+        self.saved_password = password
         current_password = self.cleaned_data["current_password"]
 
         if not self.user.check_password(current_password):
@@ -105,7 +106,7 @@ class ChangePasswordProfileForm(forms.Form):
 
     def clean_re_password(self):
         re_password = self.cleaned_data["re_password"]
-        password = self.cleaned_data["password"]
+        password = self.cleaned_data.get("password") or self.saved_password
 
         if re_password != password:
             self.add_error("password", "Новый и повторный пароли должны сопадать")

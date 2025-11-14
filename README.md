@@ -227,3 +227,14 @@ Run load staticfiles to admin panel in container:
 Run uploading recording from a resource in container:
     
     docker-compose -f docker-compose.prod.yml exec server  ../venv/bin/python manage.py upload_recordings
+
+## Letsencrypt certificate
+
+Create letsencrypt certificate
+
+    docker-compose -f docker-compose.certbot.yml up
+
+Renew letsencrypt certificate
+    
+    docker compose run --rm certbot renew --dry-run # Test renewal
+    docker compose run --rm certbot renew # Actual renewal
