@@ -19,6 +19,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     venv/bin/pip install -r requirements.txt
 
 COPY --chown=django-user:django-user RepackingProject/ RepackingProject
+RUN chown -R django-user:django-user /usr/src/app/RepackingProject/
 
 WORKDIR /usr/src/app/RepackingProject
 
