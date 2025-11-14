@@ -104,12 +104,6 @@ class ProcessRecordingsAPIView(LoginRequiredMixin, View):
 
         recording_ids = form.cleaned_data["recording_ids"].split(',')
 
-        ## left outer join
-        # recordings = get_recording_tasks_left_outer_recording(
-        #     Q(record_id__in=recording_ids) & ~Q(recordingtaskidmodel__status__in=[2, 3])
-        # )
-        # recordings = list(recordings)
-
         recording_tasks = get_recording_order_tasks_distinct_record(
             Q(recording_id__in=recording_ids) & Q(order__user_id=request.user.id) & Q(status__in=[2, 3])
         )
@@ -130,26 +124,23 @@ class ProcessRecordingsAPIView(LoginRequiredMixin, View):
                 status=HTTPStatus.OK
             )
 
-        # clean_recording_ids = [recording.record_id for recording in recordings]
-
         order = create_recording_order(count=len(clean_recording_ids), user_id=request.user.id,
                                        type_recording_id=recordings[0].type_recording_id)
 
-        recording_task_list = []
         for recording in recordings:
             resource = urlsplit(recording.url).netloc
 
-            task = repack_threads_video_task.delay(resource=resource,
-                                                   type_recording_id=order.type_recording_id,
-                                                   recording_id=recording.record_id,
-                                                   user_id=request.user.id,
-                                                   order_id=order.id,
-                                                   order_count=order.count)
-            recording_task_list.append(
-                RecordingTaskIdModel(recording_id=recording.record_id, task_id=task, order=order, status=2)
-            )
-
-        create_recording_tasks(recording_task_list)
+            task_params = {
+                "resource": resource,
+                "user_id": request.user.id,
+                "recording_task": {
+                    "recording_id": recording.record_id,
+                    "task_id": None,
+                    "order_id": order.id,
+                    "status": 2,
+                }
+            }
+            repack_threads_video_task.delay(**task_params)
 
         recordings = [
             {"record_id": recording_id, "status": 2}

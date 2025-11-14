@@ -19,7 +19,7 @@ from common.nextcloud import upload_to_nextcloud
 from common.process_termination import terminate_process
 from common.redis_conn import get_redis_connection
 from common.mail.email_user import NotifyEmailUser
-from RepackingApp.services.record_task import update_recording_tasks
+from RepackingApp.services.record_task import update_recording_tasks, create_recording_task
 from RepackingApp.services.order_record import update_recording_orders, get_recording_orders, \
     get_recording_orders_with_type_recording
 from RepackingApp.services.notify_email_user import send_processed_video_notify_email
@@ -66,7 +66,7 @@ def send_mail_use_broker_task(
 
 @app.task(bind=True)
 def repack_threads_video_task(
-    self, resource, type_recording_id, recording_id, user_id, order_id, order_count
+    self, resource, user_id, recording_task
 ):
     """
     Перепакова видео через отложенный вызов
@@ -84,14 +84,16 @@ def repack_threads_video_task(
     # Извелаем пользователя для проверки возможности загрузки и отправки эп.
 
     user = get_user(pk=user_id)
+    order_id = recording_task["order_id"]
+    recording_id = recording_task["recording_id"]
+
+    # Создание задачи
+    logging.info("Create recording task")
+    recording_task["status"] = 3
+    recording_task["task_id"] = self.request.id
+    create_recording_task(**recording_task)
 
     logging.info(f"Start process {resource}, {recording_id}")
-
-    # Обновление статуса задачи на "обрабатывается"
-
-    update_recording_tasks(
-        Q(task_id=self.request.id), status=3
-    )
 
     recordings = get_recordings_foreinkey_type_recording(Q(record_id=recording_id))
     first_recording = recordings[0]
