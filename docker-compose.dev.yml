@@ -29,12 +29,12 @@ services:
     expose:
       - "8000"
     volumes:
-      - ./RepackingProject/:/usr/src/app/RepackingProject
-      - ./RepackingProject/files:/usr/src/app/RepackingProject/files
-#      - recording-files-volume:/usr/src/app/RepackingProject/files
+#      - ./RepackingProject/:/usr/src/app/RepackingProject
+#      - ./RepackingProject/files:/usr/src/app/RepackingProject/files
+      - recording-files-volume:/usr/src/app/RepackingProject/files
       - static-volume:/usr/src/app/RepackingProject/static
-    command: bash -c '/usr/src/app/venv/bin/python manage.py runserver 0.0.0.0:8000'
-#    command: bash -c '/usr/src/app/venv/bin/gunicorn --timeout 600 --workers 6 --bind 0.0.0.0:8000 RepackingProject.wsgi:application'
+#    command: bash -c '/usr/src/app/venv/bin/python manage.py runserver 0.0.0.0:8000'
+    command: bash -c '/usr/src/app/venv/bin/gunicorn --timeout 600 --workers 6 --bind 0.0.0.0:8000 RepackingProject.wsgi:application'
 
   celery-worker-1:
     build:
@@ -66,8 +66,8 @@ services:
       - .docker.broker.env
       - .docker.env
     volumes:
-#      - recording-files-volume:/usr/src/app/RepackingProject/files
-      - ./RepackingProject/files:/usr/src/app/RepackingProject/files
+      - recording-files-volume:/usr/src/app/RepackingProject/files
+#      - ./RepackingProject/files:/usr/src/app/RepackingProject/files
 
   celery-worker-3:
     build:
@@ -83,8 +83,8 @@ services:
       - .docker.broker.env
       - .docker.env
     volumes:
-#      - recording-files-volume:/usr/src/app/RepackingProject/files
-      - ./RepackingProject/files:/usr/src/app/RepackingProject/files
+      - recording-files-volume:/usr/src/app/RepackingProject/files
+#      - ./RepackingProject/files:/usr/src/app/RepackingProject/files
 
   flower:
     image: mher/flower:0.9.7
