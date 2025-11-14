@@ -9,11 +9,13 @@ import subprocess
 
 from django.db.models import Q
 from django.conf import settings
+from django.db.utils import IntegrityError
 from django.core.mail import send_mail, BadHeaderError
 
 from AccountApp.models import UserModel
 from AccountApp.services.user import get_user
 from CeleryApp.app import app
+from RepackingApp.models import RecordingTaskIdModel
 from common.archive import Archiving, ArchivingUnpack
 from common.nextcloud import upload_to_nextcloud
 from common.process_termination import terminate_process
@@ -88,10 +90,17 @@ def repack_threads_video_task(
     recording_id = recording_task["recording_id"]
 
     # Создание задачи
-    logging.info("Create recording task")
     recording_task["status"] = 3
     recording_task["task_id"] = self.request.id
-    create_recording_task(**recording_task)
+
+    try:
+        create_recording_task(**recording_task)
+        logging.info("Created recording task")
+    except IntegrityError:
+        logging.info("Update recording task status to 3 value ")
+        update_recording_tasks(
+            Q(task_id=self.request.id), status=3
+        )
 
     logging.info(f"Start process {resource}, {recording_id}")
 
@@ -272,7 +281,7 @@ def remove_expired_files_periodic_task():
         datetime_created__lte=
         datetime.datetime.now(datetime.timezone.utc)
         -
-        datetime.timedelta(days=1)
+        datetime.timedelta(days=7)
     )
     logging.info("Get recordings files")
     recording_files = get_recording_files(query_filter)

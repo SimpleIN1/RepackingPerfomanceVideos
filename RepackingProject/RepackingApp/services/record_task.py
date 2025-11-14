@@ -1,3 +1,4 @@
+import pprint
 from typing import List
 
 from django.db.models import Q
@@ -78,7 +79,11 @@ def create_recording_tasks(recording_tasks: List[RecordingTaskIdModel]) -> List[
     :return:
     """
 
-    return RecordingTaskIdModel.objects.bulk_create(recording_tasks)
+    return RecordingTaskIdModel.objects.bulk_create(
+        recording_tasks,
+        ignore_conflicts=True,
+        unique_fields=["task_id"], update_fields=["task_id"]
+    )
 
 
 def delete_recordings_tasks(filter_query: Q) -> None:
@@ -95,31 +100,31 @@ def delete_recordings_tasks(filter_query: Q) -> None:
 
 
 def get_recording_tasks_status(user_id, type_recording_id):
+    """
+    SELECT
+        DISTINCT ON (rt.recording_id)
+        rt.recording_id,
+        rt.status,
+        rt.datetime_created
+    FROM "RepackingApp_recordingtaskidmodel" AS rt
+    ORDER BY
+        rt.recording_id, rt.datetime_created DESC,
+        rt.status;
+
+    :param user_id:
+    :param type_recording_id:
+    :return:
+    """
     query_status = (Q(status=4) | Q(status=5) | Q(status=6))
 
     items = RecordingTaskIdModel \
         .objects \
-        .select_related("order", "recording") \
         .filter(
-        Q(recording__type_recording_id=type_recording_id) &
-        (query_status | (Q(order__user_id=user_id) & ~query_status))
-    ) \
-        .values("recording_id", "status", "datetime_created")
+            Q(order__type_recording_id=type_recording_id)
+            & (query_status | (Q(order__user_id=user_id) & ~query_status))
+        ) \
+        .distinct("recording_id") \
+        .order_by("recording_id", "-datetime_created", "status") \
+        .values("recording_id", "datetime_created", "status")
 
-    if not items:
-        return []
-
-    recording_task_d = {}
-    for item in items:
-        rid = item["recording_id"]
-        checker = False
-        if recording_task_d.get(rid):
-            if recording_task_d[rid]["datetime_created"] < item["datetime_created"]:
-                checker = True
-        else:
-            checker = True
-
-        if checker:
-            recording_task_d[rid] = item
-
-    return recording_task_d
+    return items

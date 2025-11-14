@@ -590,12 +590,6 @@ class RecordingTaskTests(TestCase):
         }
         self.user = UserModel.objects.create_user(**self.user_data)
 
-        self.one_data_order = {
-            "count": 20,
-            "user_id": self.user.id
-        }
-        self.order = OrderRecordingModel.objects.create(**self.one_data_order)
-
     def test_create_recording_task(self):
         recording = parse_xml_recording(self.one_recording)
         type_recording = parse_xml_type_recording(self.one_recording)
@@ -715,19 +709,21 @@ class RecordingTaskTests(TestCase):
 
         tmp_recordings = RecordingModel.objects.all()[:3]
 
-        self.one_data_order = {
+        one_data_order = {
             "count": 20,
             "user_id": self.user.id,
-            "type_recording_id": tmp_recordings[0].type_recording_id
+            "type_recording": tmp_recordings[0].type_recording
         }
-        self.order = OrderRecordingModel.objects.create(**self.one_data_order)
+        order = OrderRecordingModel.objects.create(**one_data_order)
         l = []
         for r in tmp_recordings:
             uid = uuid.uuid4()
-            l.append(RecordingTaskIdModel(recording=r, task_id=str(uid), order=self.order))
+            l.append(RecordingTaskIdModel(recording=r, task_id=str(uid), order=order))
 
         res = create_recording_tasks(l)
         self.assertIsNotNone(res)
+
+        RecordingTaskIdModel.objects.get_or_create(recording=l[0].recording, task_id=l[0].task_id, order=l[0].order)
 
         count = RecordingTaskIdModel.objects.count()
 

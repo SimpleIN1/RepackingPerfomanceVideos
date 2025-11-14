@@ -72,12 +72,13 @@ class RecordingsAPIView(LoginRequiredMixin, View):
 class RecordingsStatusAPIView(LoginRequiredMixin, View):
 
     def get(self, request, pk):
-        recording_task_d = get_recording_tasks_status(request.user.id, pk)
+        items = get_recording_tasks_status(request.user.id, pk)
 
         return HttpResponse(
             json.dumps({
                 "success": True,
-                "recordings": [recording_task_d[item] for item in recording_task_d]
+                # "recordings": [recording_task_d[item] for item in items]
+                "recordings": [item for item in items]
             }, default=str),
             content_type='application/json',
             status=HTTPStatus.OK
@@ -127,6 +128,7 @@ class ProcessRecordingsAPIView(LoginRequiredMixin, View):
         order = create_recording_order(count=len(clean_recording_ids), user_id=request.user.id,
                                        type_recording_id=recordings[0].type_recording_id)
 
+        recording_task_list = []
         for recording in recordings:
             resource = urlsplit(recording.url).netloc
 
@@ -140,7 +142,11 @@ class ProcessRecordingsAPIView(LoginRequiredMixin, View):
                     "status": 2,
                 }
             }
-            repack_threads_video_task.delay(**task_params)
+            task = repack_threads_video_task.delay(**task_params)
+            task_params["recording_task"]["task_id"] = task
+            recording_task_list.append(RecordingTaskIdModel(**task_params["recording_task"]))
+
+        create_recording_tasks(recording_task_list)
 
         recordings = [
             {"record_id": recording_id, "status": 2}
