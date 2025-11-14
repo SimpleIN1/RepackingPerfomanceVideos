@@ -34,7 +34,7 @@ services:
       - recording-files-volume:/usr/src/app/RepackingProject/files
       - static-volume:/usr/src/app/RepackingProject/static
 #    command: bash -c '/usr/src/app/venv/bin/python manage.py runserver 0.0.0.0:8000'
-    command: bash -c '/usr/src/app/venv/bin/gunicorn --timeout 600 --workers 6 --bind 0.0.0.0:8000 RepackingProject.wsgi:application'
+    command: bash -c '/usr/src/app/venv/bin/gunicorn --timeout 600 --preload --workers 6 --bind 0.0.0.0:8000 RepackingProject.wsgi:application -e WSGI_FULL_INIT=1 -e WSGI_FULL_INIT_CLOSE_CONNECTIONS=1'
 
   celery-worker-1:
     build:
