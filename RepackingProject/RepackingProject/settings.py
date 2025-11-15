@@ -261,5 +261,5 @@ NEXTCLOUD_SHARE_LINK = os.getenv("NEXTCLOUD_SHARE_LINK")
 NEXTCLOUD_SHARE_LINK_PASSWORD = os.getenv("NEXTCLOUD_SHARE_LINK_PASSWORD")
 
 import base64
-with open("static/assets/logo/logo45x35.png", "rb") as f:
+with open(os.path.join(BASE_DIR, "static/assets/logo/logo45x35.png"), "rb") as f:
     IMAGE_B64 = base64.b64encode(f.read()).decode()
