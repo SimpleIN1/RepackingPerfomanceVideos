@@ -2,6 +2,9 @@
 .downloads {
     overflow-x: scroll;
 }
+.container {
+     min-height: calc(100vh - 153px);
+}
 table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{border-bottom:1px solid rgba(255,255,255,0.05);padding:8px;text-align:left}
 th{color:var(--muted);font-weight:500}
