@@ -387,6 +387,7 @@ def check_count_processed_videos_periodic_task():
 
             r.delete(settings.REDIS_KEY_ORDER_FAILED.format(order.id))
             r.delete(settings.REDIS_KEY_ORDER_CANCELLED.format(order.id))
+            r.delete(settings.REDIS_KEY_ORDER_PROCESSED.format(order.id))
             r.save()
 
             update_recording_orders(Q(pk=order.id), count_failed=count_failed,
@@ -407,3 +408,4 @@ def check_count_processed_videos_periodic_task():
 
     logging.info(f"Stop {order.id} check_count_processed_videos_periodic_task")
 
+###  Session storage

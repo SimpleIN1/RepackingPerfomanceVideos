@@ -1,5 +1,8 @@
+from datetime import datetime
+
 from django.conf import settings
 from django.urls import reverse_lazy
+from django.contrib.sessions.backends.cache import SessionStore # cache
 
 from common.code_generator import generate_code
 from common.mail.email_user import ConfirmationEmailUser
@@ -23,7 +26,12 @@ def send_confirmation_email(cm_user: ConfirmationEmailUser):
     ccs.reset_attempt(cm_user.kind)
 
     session_id = cm_user.session.session_key
-    verify_url = f"{settings.SCHEMA}://{settings.DOMAIN}{str(reverse_lazy(cm_user.api_call))}?session_id={session_id}"
+
+    s = SessionStore()
+    s.update({"session_id": session_id, "datetime_created": str(datetime.now().timestamp()).split('.')[0]})
+    s.save()
+
+    verify_url = f"{settings.SCHEMA}://{settings.DOMAIN}:{settings.PORT}{str(reverse_lazy(cm_user.api_call))}?session_id={s.session_key}"
     context = {
         "code": code,
         "expiration_minutes": settings.EXPIRATION_MINUTES,

@@ -1,6 +1,7 @@
 import json
 import logging
 from http import HTTPStatus
+from importlib import import_module
 
 from django.views import View
 from django.conf import settings
@@ -16,7 +17,8 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.sessions.backends.db import SessionStore
+from django.contrib.sessions.backends.cache import SessionStore # cache
+
 from django.views.generic.edit import CreateView, UpdateView
 # from silk.profiling.profiler import silk_profile
 
@@ -28,6 +30,7 @@ from common.mail.email_user import ConfirmationEmailUser
 from common.mail.mail import Confirmation2FAEmail, ConfirmationForgotPasswordEmail, ConfirmationEmail
 from AccountApp.services.confirm_email_user import send_confirmation_email
 from AccountApp.services.session_service import ConfirmationCodeSessionService, UserSession
+from common.manage_datetime import is_expiration_time
 
 
 class LoginView(View):
@@ -81,20 +84,27 @@ class Login2FAView(View):
 
     def get(self, request):
         context = {"form": self.form_class()}
+        if request.user and request.user.is_authenticated:
+            return redirect("repacking-records")
+
+        response = render(request, self.template_name, context=context)
 
         session_id = request.GET.get("session_id")
         if session_id:
-            try:
-                session_id_db = Session.objects.get(pk=session_id)
-                if session_id_db:
-                    request.session.session_key = session_id
-            except Session.DoesNotExist:
-                return redirect("not_found")
+            s = SessionStore(session_id)
+            if not s.exists(session_id):
+                return redirect("not-found")
 
-        if request.user.is_authenticated:
-            return redirect("repacking-records")
+            datetime_created = s.get("datetime_created")
+            if not is_expiration_time(datetime_created, settings.EXPIRATION_MINUTES):
+                s.delete(session_id)
+                return redirect("not-found")
 
-        return render(request, self.template_name, context=context)
+            stored_session_id = s.get("session_id")
+
+            response.set_cookie("sessionid", stored_session_id)
+
+        return response
 
     @method_decorator(csrf_protect)
     def post(self, request):

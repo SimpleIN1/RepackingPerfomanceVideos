@@ -1,5 +1,8 @@
+from datetime import datetime
+
 from django.conf import settings
 from django.urls import reverse_lazy
+from django.contrib.sessions.backends.cache import SessionStore # cache
 
 from common.mail.email_user import NotifyEmailUser
 
@@ -11,8 +14,20 @@ def send_processed_video_notify_email(nm_user: NotifyEmailUser):
     :return:
     """
 
-    session_id = "dfsfsf"
-    videos_url = f"{settings.SCHEMA}://{settings.DOMAIN}{str(reverse_lazy(nm_user.api_call))}?session_id={session_id}"
+    s = SessionStore()
+    s.update({
+        settings.NOTIFY_CODE_SESSION: {
+            "datetime_created": str(datetime.now().timestamp()).split('.')[0],
+            "user_id": nm_user.user.id
+        }
+    })
+    s.save()
+
+    # s = SessionStore()
+    # s.update({"session_id": session_id, "datetime_created": str(datetime.now().timestamp()).split('.')[0]})
+    # s.save()
+
+    videos_url = f"{settings.SCHEMA}://{settings.DOMAIN}:{settings.PORT}{str(reverse_lazy(nm_user.api_call))}?session_id={s.session_key}"
     context = {
         "video_count": nm_user.video_count,
         "video_count_success": nm_user.video_count-nm_user.video_count_failed-nm_user.video_count_cancelled,

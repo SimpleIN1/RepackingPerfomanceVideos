@@ -56,6 +56,6 @@ app.conf.beat_schedule = {
     },
     'Check orders every 10 minutes': {
         'task': 'CeleryApp.tasks.check_count_processed_videos_periodic_task',
-        'schedule': 60*10,
+        'schedule': 10#60*10,
     },
 }

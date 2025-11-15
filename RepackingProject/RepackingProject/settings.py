@@ -102,9 +102,6 @@ WSGI_APPLICATION = 'RepackingProject.wsgi.application'
 
 DATABASES = {
     'default': {
-        # 'ENGINE': 'django.db.backends.sqlite3',
-        # 'NAME': BASE_DIR / 'db.sqlite3',
-
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': os.getenv("POSTGRES_DB", "postgres_db"),
         'USER': os.getenv("POSTGRES_USER", "postgres_user"),
@@ -234,17 +231,22 @@ EMAIL_SENDER = (bool(int(os.getenv('EMAIL_SENDER', 1))))
 SCHEMA = os.getenv("SCHEMA")
 WEBSITE_NAME = os.getenv("WEBSITE_NAME")
 DOMAIN = os.getenv("DOMAIN")
+PORT = os.getenv("PORT")
 SUPPORT_EMAIL = os.getenv("SUPPORT_EMAIL")
 
 EXPIRATION_MINUTES = 20
-SUCCESS_ATTEMPT_COUNT = 10
+NOTIFY_EXPIRATION_MINUTES = 24*60
+SUCCESS_ATTEMPT_COUNT = 110
 CONFIRMATION_CODE_SESSION = "confirm-code"
+NOTIFY_CODE_SESSION = "notify-code"
 
+# Redis keys
 REDIS_KEY_CHECKER = "rediskeyckecker"
 REDIS_KEY_ORDER_PROCESSED = "order-{}"
 REDIS_KEY_ORDER_FAILED = "order-{}-failed"
 REDIS_KEY_ORDER_CANCELLED = "order-{}-cancelled"
 
+# Session keys
 KIND_CODE_2FA = "2fa"
 KIND_CODE_EMAIL = "email"
 KIND_CODE_FORGOT_PASSWORD = "forgotpassword"

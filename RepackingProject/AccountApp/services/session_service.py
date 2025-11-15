@@ -2,6 +2,8 @@ from datetime import datetime, timezone, timedelta
 
 from django.conf import settings
 
+from common.manage_datetime import is_expiration_time
+
 
 class SessionService:
     _session = None
@@ -51,7 +53,7 @@ class ConfirmationCodeSessionService:
         if not self.session_code.get(kind):
             return False
 
-        if self.get_attempt(kind) > 3:
+        if self.get_attempt(kind) > settings.SUCCESS_ATTEMPT_COUNT:
             return False
 
         confirmation_email = self.session_code[kind].get("confirmation_email")
@@ -61,7 +63,6 @@ class ConfirmationCodeSessionService:
 
         if not self.is_active_code(kind):
             self.clear_kind(kind)
-
             return False
 
         if not code == self.session_code[kind]["code"]:
@@ -69,16 +70,16 @@ class ConfirmationCodeSessionService:
 
         return True
 
+    def check_kind(self, kind):
+        return self.session_code.get(kind)
+
     def is_active_code(self, kind):
         datetime_created = self.session_code[kind].get("datetime_created")
 
         if not datetime_created:
             return False
 
-        datetime_created = int(datetime_created)
-        return ((datetime.now(timezone.utc) -
-                datetime.fromtimestamp(datetime_created, timezone.utc)) <
-                timedelta(minutes=settings.EXPIRATION_MINUTES))
+        return is_expiration_time(datetime_created, settings.EXPIRATION_MINUTES)
 
     def add(self, code, kind, *args, **data):
         self.session_code.setdefault(kind, {})
@@ -99,6 +100,9 @@ class ConfirmationCodeSessionService:
 
     def get_data(self, kind):
         return self.session_code[kind]["data"]
+
+    def get_full_data(self):
+        return {settings.CONFIRMATION_CODE_SESSION: self.session_code}
 
     def confirm_code(self, kind):
         self.session_code.setdefault(kind, {})
@@ -127,3 +131,30 @@ class ConfirmationCodeSessionService:
     def reset_attempt(self, kind):
         self.session_code[kind]["attempt"] = 0
         self.save()
+
+
+class NotifySessionService:
+    def __init__(self, session):
+        self.session = session
+
+        session_notify = self.session.get(settings.NOTIFY_CODE_SESSION)
+
+        if session_notify is None:
+            session_notify = self.session[settings.NOTIFY_CODE_SESSION] = {}
+
+        self.session_notify = session_notify
+
+    def is_active(self):
+        datetime_created = self.session_notify.get("datetime_created")
+
+        if not datetime_created:
+            return False
+
+        return is_expiration_time(datetime_created, settings.NOTIFY_EXPIRATION_MINUTES)
+
+    def get_full_data(self):
+        return {settings.NOTIFY_CODE_SESSION: self.session_notify}
+
+    def get_user_id(self):
+        user_id = self.session_notify.get("user_id")
+        return user_id

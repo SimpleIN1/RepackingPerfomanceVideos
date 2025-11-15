@@ -43,6 +43,11 @@ class Login2FAForm(forms.Form, SessionService):
         code = self.cleaned_data["code"]
 
         ccs = ConfirmationCodeSessionService(self._session)
+
+        if not ccs.check_kind(settings.KIND_CODE_2FA):
+            self.add_error("code", "Некорректный код или истек срок действия")
+            return code
+
         ccs.increase_attempt(settings.KIND_CODE_2FA)
 
         attempt = ccs.get_attempt(settings.KIND_CODE_2FA)

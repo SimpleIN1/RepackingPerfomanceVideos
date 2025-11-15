@@ -14,9 +14,13 @@ from django.contrib.sessions.models import Session
 from django.http import HttpResponse, FileResponse
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_protect, csrf_exempt
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.sessions.backends.cache import SessionStore # cache
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.decorators.csrf import csrf_protect, csrf_exempt
 
+from AccountApp.services.session_service import NotifySessionService
+from AccountApp.services.user import get_user
 from CeleryApp.app import app
 from CeleryApp.tasks import repack_threads_video_task, remove_dirs_task, \
     upload_processed_records, terminate_process_task
@@ -37,7 +41,8 @@ from common.redis_conn import get_redis_connection
 class RecordingsView(LoginRequiredMixin, View):
     template_name = "repacking/records.html"
 
-    @method_decorator(cache_page(60 * 60 * 12), name='dispatch')
+    # @method_decorator(cache_page(60 * 60 * 12), name='dispatch')
+    # @csrf_protect
     def get(self, request):
         context = {}
         context["status_list"] = RecordingTaskIdModel.STATUS_CHOICES
@@ -310,7 +315,7 @@ class RoomsAPIView(LoginRequiredMixin, View):
         )
 
 
-class DownloadView(LoginRequiredMixin, View):
+class DownloadView(View):
     template_name = "repacking/downloads.html"
 
     def get(self, request):
@@ -318,18 +323,28 @@ class DownloadView(LoginRequiredMixin, View):
 
         session_id = request.GET.get("session_id")
         if session_id:
-            try:
-                session_id_db = Session.objects.get(pk=session_id)
-                if session_id_db:
-                    request.session.session_key = session_id
-            except Session.DoesNotExist:
-                return redirect("not_found")
+            s = SessionStore(session_id)
+            if not s.exists(session_id):
+                return redirect("not-found")
 
-            user_id = request.session.get('_auth_user_id')
-            if not user_id:
-                return redirect("not_found")
+            n = NotifySessionService(s)
 
+            if not n.is_active():
+                s.delete(session_id)
+                return redirect("not-found")
+
+            user_id = n.get_user_id()
+            user = get_user(id=user_id)
+
+            if not user:
+                return redirect("login")
+
+            login(request, user)
         else:
+
+            if not request.user.is_authenticated:
+                return redirect("login")
+
             user_id = request.user.id
 
         recording_files = get_download_recording_files(Q(recording_task__order__user_id=user_id))
