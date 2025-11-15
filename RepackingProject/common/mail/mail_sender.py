@@ -22,11 +22,7 @@ class SenderEmail:
         self.context["schema"] = settings.SCHEMA
         self.context["domain"] = settings.DOMAIN
         self.context["port"] = settings.PORT
-
-        with open("/static/assets/logo/logo.png", "rb") as f:
-            image_b64 = base64.b64encode(f.read())
-
-        self.context["logo"] = f"data:image/jpg;base64,{image_b64}"
+        self.context["logo"] = f"data:image/jpg;base64,{settings.IMAGE_B64}"
         self.context["support_email"] = settings.SUPPORT_EMAIL
 
         html_message = render_to_string(self.template, context=self.context)
