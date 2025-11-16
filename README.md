@@ -52,6 +52,7 @@ environments
     WEBSITE_NAME=project_name
     DOMAIN=localhost
     SUPPORT_EMAIL=test@mail.ru
+    SUCCESS_ATTEMPT_COUNT=7
     
     NEXTCLOUD_RESOURCE=nextcloud.ru
     NEXTCLOUD_USER=user
@@ -153,6 +154,7 @@ file .docker.env:
     WEBSITE_NAME=project_name
     DOMAIN=localhost
     SUPPORT_EMAIL=test@mail.ru
+    SUCCESS_ATTEMPT_COUNT=7
     
     NEXTCLOUD_RESOURCE=nextcloud.ru
     NEXTCLOUD_USER=user
