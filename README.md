@@ -1,3 +1,8 @@
+# RepackingVideos
+
+WEB-app for repacking videos from BigBlueButton using ffmpeg on django.
+Stack: Python, Django, Celery, Gunicorn, ffmpeg, NGINX, Docker, docker-compose, PostgreSQL, Redis
+
 # DEBUG
 
 ---
