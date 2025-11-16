@@ -167,6 +167,8 @@ file .docker.env:
     REDIS_HOST=localhost
     REDIS_PORT=6379
     REDIS_DB=2
+    
+    FFMPEG_CELERY_CONCURRENCY=1
 
 file .docker.postgres.env:
 

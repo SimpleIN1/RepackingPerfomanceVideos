@@ -15,7 +15,7 @@ services:
       - .docker.nginx.env
     volumes:
       - ./nginx/conf.d/prod.conf:/usr/src/app/nginx/conf.d/default.conf
-      - etc-letsencrypt:/etc/letsencrypt/localhost/
+      - etc-letsencrypt:/etc/letsencrypt/
       - static-volume:/usr/src/app/RepackingProject/static
     command: /bin/bash -c "envsubst '$${SERVER_NAME},$${SSL_CERTIFICATE_PATH},$${SSL_CERTIFICATE_KEY_PATH}' < /usr/src/app/nginx/conf.d/default.conf > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
 
@@ -43,7 +43,7 @@ services:
       context: .
       dockerfile: dockerfile/celery.ffmpeg.Dockerfile
     restart: unless-stopped
-    command: bash -c '/usr/src/app/venv/bin/celery -A CeleryApp.app worker --loglevel=info -c 1 -Q ffmpeg_worker_queue -n ffmpeg-worker'
+    command: bash -c '/usr/src/app/venv/bin/celery -A CeleryApp.app worker --loglevel=info -c $${FFMPEG_CELERY_CONCURRENCY} -Q ffmpeg_worker_queue -n ffmpeg-worker'
     depends_on:
       - redis
     env_file:
@@ -132,3 +132,4 @@ volumes:
   recording-files-volume:
   static-volume:
   portainer_data:
+  etc-letsencrypt:

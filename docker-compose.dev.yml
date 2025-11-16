@@ -41,7 +41,7 @@ services:
       context: .
       dockerfile: dockerfile/celery.ffmpeg.Dockerfile
     restart: unless-stopped
-    command: bash -c '/usr/src/app/venv/bin/celery -A CeleryApp.app worker --loglevel=debug -c 1 -Q ffmpeg_worker_queue -n ffmpeg-worker'
+    command: bash -c '/usr/src/app/venv/bin/celery -A CeleryApp.app worker --loglevel=debug -c $${FFMPEG_CELERY_CONCURRENCY} -Q ffmpeg_worker_queue -n ffmpeg-worker'
     depends_on:
       - redis
     env_file:
