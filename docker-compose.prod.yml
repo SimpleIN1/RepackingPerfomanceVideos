@@ -114,7 +114,7 @@ services:
       - db-volume:/var/lib/postgresql/data/
 
   portainer:
-    image: portainer/portainer-ce:latest
+    image: portainer/portainer-ce:2.20.2
     container_name: portainer
     restart: always
     expose:
