@@ -18,11 +18,7 @@ def mkdir_root(oc):
         oc.mkdir(settings.NEXTCLOUD_PATH)
 
 
-oc = set_up()
-mkdir_root(oc)
-
-
-def is_exist_dir(remote_dir):
+def is_exist_dir(oc, remote_dir):
     try:
         rd = remote_dir
         if rd[0] != '/' and rd[-1] == '/':
@@ -46,25 +42,25 @@ def is_exist_dir(remote_dir):
     return False
 
 
-def mkdir_parent(remote_dir):
+def mkdir_parent(oc, remote_dir):
     dirname = ''
     dirs = remote_dir.split('/')
     for i in range(1, len(dirs)-1):
         dirname = os.path.join(dirname, dirs[i])
 
-        if not is_exist_dir(dirname):
+        if not is_exist_dir(oc, dirname):
             oc.mkdir(f"/{dirname}/")
 
 
-def upload_to_nextcloud(remote_file, local_source_file):
+def upload_to_nextcloud(oc, remote_file, local_source_file):
     remote_dir = os.path.dirname(remote_file)
     remote_dir_full = f"/{settings.NEXTCLOUD_PATH}/{remote_dir}/"
     remote_full = f"/{settings.NEXTCLOUD_PATH}/{remote_file}"
 
-    if is_exist_dir(f"{remote_full}/"):
+    if is_exist_dir(oc, f"{remote_full}/"):
         oc.delete(f"{remote_full}/")
 
-    if remote_dir and not is_exist_dir(remote_dir_full):
-        mkdir_parent(remote_dir_full)
+    if remote_dir and not is_exist_dir(oc, remote_dir_full):
+        mkdir_parent(oc, remote_dir_full)
 
     oc.put_file(remote_full, local_source_file, chunked=False)

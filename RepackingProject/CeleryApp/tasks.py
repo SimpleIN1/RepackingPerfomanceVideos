@@ -17,7 +17,8 @@ from AccountApp.services.user import get_user
 from CeleryApp.app import app
 from RepackingApp.models import RecordingTaskIdModel
 from common.archive import Archiving, ArchivingUnpack
-from common.nextcloud import upload_to_nextcloud
+from common.conn_check import health_check
+from common.nextcloud import upload_to_nextcloud, set_up, mkdir_root
 from common.process_termination import terminate_process
 from common.redis_conn import get_redis_connection
 from common.mail.email_user import NotifyEmailUser
@@ -142,29 +143,27 @@ def repack_threads_video_task(
 
         # Обновление статуса задачи на "завершена"
 
-        update_recording_tasks(
-            Q(task_id=self.request.id), status=4
-        )
+        update_recording_tasks(Q(task_id=self.request.id), status=4)
 
         # Загрузка файлов видео конференции и переписки чата в NextCloud хранилище.
+        if not health_check(domain=settings.NEXTCLOUD_RESOURCE, schema="https"):
+            logging.error(f"The \"{settings.NEXTCLOUD_RESOURCE}\" resource is not unavailable!")
+            update_recording_tasks(Q(task_id=self.request.id), status=4)
 
-        if user.nextcloud_upload:
+        elif user.nextcloud_upload:
             logging.info("Start upload to NEXTCLOUD")
 
-            upload_to_nextcloud(
-                f"{remote_dir}/{fname}", local_source_file
-            )
-            upload_to_nextcloud(
-                f"{remote_dir}/chat.xml", f"{local_source_dir}/{fname_popcorn}"
-            )
+            oc = set_up()
+            mkdir_root(oc)
+
+            upload_to_nextcloud(os, f"{remote_dir}/{fname}", local_source_file)
+            upload_to_nextcloud(oc, f"{remote_dir}/chat.xml", f"{local_source_dir}/{fname_popcorn}")
 
             logging.info("Upload successfully")
 
             # Обновление статуса задачи на "загружена"
 
-            update_recording_tasks(
-                Q(task_id=self.request.id), status=5
-            )
+            update_recording_tasks(Q(task_id=self.request.id), status=5)
 
         # Архивирование. После загрузки файлов в NextCloud хранилище
         # файлы ахрвируются и появляется возможность скачать по ссылке.
@@ -197,9 +196,7 @@ def repack_threads_video_task(
 
         r.incr(settings.REDIS_KEY_ORDER_FAILED.format(order_id))
 
-        update_recording_tasks(
-            Q(task_id=self.request.id), status=6
-        )
+        update_recording_tasks(Q(task_id=self.request.id), status=6)
 
         r.delete(self.request.id)
         r.save()
@@ -219,7 +216,10 @@ def upload_processed_records(task_id, user_id, type_recording_name, local_source
     """
     user = get_user(pk=user_id)
 
-    if user.nextcloud_upload:
+    if not health_check(domain=settings.NEXTCLOUD_RESOURCE, schema="https"):
+        logging.error(f"The \"{settings.NEXTCLOUD_RESOURCE}\" resource is not unavailable!")
+
+    elif user.nextcloud_upload:
         try:
             logging.info("Start upload to NEXTCLOUD")
 
@@ -231,20 +231,16 @@ def upload_processed_records(task_id, user_id, type_recording_name, local_source
             a = ArchivingUnpack(local_source_file)
             a.unpack_archive()
 
-            upload_to_nextcloud(
-                remote_file, f"{local_source_dir}/{fname}"
-            )
-            upload_to_nextcloud(
-                f"{type_recording_name}/{extract_dir}/chat.xml", f"{local_source_dir}/popcorn.xml"
-            )
+            oc = set_up()
+            mkdir_root(oc)
+            upload_to_nextcloud(oc, remote_file, f"{local_source_dir}/{fname}")
+            upload_to_nextcloud(oc, f"{type_recording_name}/{extract_dir}/chat.xml", f"{local_source_dir}/popcorn.xml")
 
             shutil.rmtree(local_source_dir)
 
             logging.info("Upload successfully")
 
-            update_recording_tasks(
-                Q(task_id=task_id), status=5
-            )
+            update_recording_tasks(Q(task_id=task_id), status=5)
         except FileNotFoundError as f:
             logging.error(f)
             logging.warning("PASS PASS PASS")
@@ -252,9 +248,7 @@ def upload_processed_records(task_id, user_id, type_recording_name, local_source
             if os.path.exists(local_source_dir):
                 shutil.rmtree(local_source_dir)
 
-            update_recording_tasks(
-                Q(task_id=task_id), status=6
-            )
+            update_recording_tasks(Q(task_id=task_id), status=6)
 
 
 @app.task
