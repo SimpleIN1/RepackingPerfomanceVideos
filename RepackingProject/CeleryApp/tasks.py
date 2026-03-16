@@ -156,7 +156,7 @@ def repack_threads_video_task(
             oc = set_up()
             mkdir_root(oc)
 
-            upload_to_nextcloud(os, f"{remote_dir}/{fname}", local_source_file)
+            upload_to_nextcloud(oc, f"{remote_dir}/{fname}", local_source_file)
             upload_to_nextcloud(oc, f"{remote_dir}/chat.xml", f"{local_source_dir}/{fname_popcorn}")
 
             logging.info("Upload successfully")
