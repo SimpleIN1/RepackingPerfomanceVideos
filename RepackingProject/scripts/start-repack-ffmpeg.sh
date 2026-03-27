@@ -57,10 +57,6 @@ echo "http_status_webcams - $http_status_webcams"
 echo "http_status_deskshare - $http_status_deskshare"
 echo "http_status_popcorn - $http_status_popcorn"
 
-if [[ "$http_status_deskshare" -ne 200 ]]; then
-  DESKSHARE="static/white.jpg"
-fi
-
 if [[ "$http_status_popcorn" -eq 200 ]]; then
   curl "$POPCORN" -o"$OUTPUT_DIR/popcorn.xml"
 fi
@@ -74,9 +70,21 @@ echo "WEBCAMS = $WEBCAMS"
 echo "Start repack videos FFMPEG"
 
 
-FILTER_COMPLEX="[1]scale=320:-1,setpts=PTS-STARTPTS[pip];\
-              [0]pad=w=1630:h=ih+20:x=10:y=10:color=LightGrey,setpts=PTS-STARTPTS[slides];\
-              [slides][pip] overlay=main_w-overlay_w-10:main_h-overlay_h-10[v]"
+if [[ "$http_status_deskshare" -ne 200 ]]; then
 
-ffmpeg -i $DESKSHARE -i $WEBCAMS -y -filter_complex "${FILTER_COMPLEX}" -map "[v]" -map "1:a" \
-    -c:v h264 -crf 21 -c:a aac -q:a 0.8 $OUT
+  echo "DESKSHARE is empty"
+  ffmpeg -i $WEBCAMS -y -c:v h264 -crf 21 -c:a aac -q:a 0.8 $OUT
+
+else
+
+  FILTER_COMPLEX="[1]scale=320:-1,setpts=PTS-STARTPTS[pip];\
+                [0]pad=w=1630:h=ih+20:x=10:y=10:color=LightGrey,setpts=PTS-STARTPTS[slides];\
+                [slides][pip] overlay=main_w-overlay_w-10:main_h-overlay_h-10[v]"
+
+  ffmpeg -i $DESKSHARE -i $WEBCAMS -y -filter_complex "${FILTER_COMPLEX}" -map "[v]" -map "1:a" \
+      -c:v h264 -crf 21 -c:a aac -q:a 0.8 $OUT
+
+fi
+
+
+echo "End repack videos FFMPEG"
