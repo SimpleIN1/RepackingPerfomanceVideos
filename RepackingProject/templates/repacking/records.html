@@ -101,12 +101,12 @@
               </form>
               <form id="terminateIDForm" method="POST" action="{% url 'repacking-api-terminate-records' %}">
                 {% csrf_token %}
-                <button class="btn terminate-btn" id="terminateBtn" type="submit">Завершить</button>
+                <button class="btn terminate-btn" id="terminateBtn" type="submit">Отменить</button>
               </form>
-              <form id="uploadIDForm" method="POST" action="{% url 'repacking-api-upload-records' %}">
-                {% csrf_token %}
-                <button class="btn upload-btn" id="uploadBtn" type="submit">Загрузить</button>
-              </form>
+              {#<form id="uploadIDForm" method="POST" action="{% url 'repacking-api-upload-records' %}">#}
+                {#{% csrf_token %}#}
+                {#<button class="btn upload-btn" id="uploadBtn" type="submit">Загрузить</button>#}
+              {#</form>#}
               <button class="btn ghost" id="selectAllBtn">Выбрать всё</button>
               <button class="btn ghost" id="deselectAllBtn">Снять выделение</button>
             </div>
