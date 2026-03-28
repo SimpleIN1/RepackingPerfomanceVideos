@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from lxml import etree
 
 
@@ -32,6 +33,7 @@ f"""Количество участников: {self._participants},
 
 
 def save_file(path, text: str):
+    logging.info(f"Saving file: {path}")
     with open(path, 'w') as f:
         f.write(text)
 
@@ -44,6 +46,7 @@ def read_xml_popcorn(filename: str, message_list_container: MessageListContainer
     """
 
     try:
+        logging.info("Read xml popcorn")
         tree = etree.parse(filename)
         root = tree.getroot()
 
@@ -51,6 +54,7 @@ def read_xml_popcorn(filename: str, message_list_container: MessageListContainer
             message = Message(author=item.get('name'), text=item.get('message'))
             message_list_container.add_message(message)
     except etree.XMLSyntaxError:
+        logging.error("Syntax error xml popcorn")
         return None
 
 
