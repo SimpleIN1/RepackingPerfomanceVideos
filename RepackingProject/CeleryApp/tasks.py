@@ -17,6 +17,7 @@ from AccountApp.services.user import get_user
 from CeleryApp.app import app
 from RepackingApp.models import RecordingTaskIdModel
 from common.archive import Archiving, ArchivingUnpack
+from common.chat_format import MessageListContainer, read_xml_popcorn, save_file
 from common.conn_check import health_check
 from common.nextcloud import upload_to_nextcloud, set_up, mkdir_root
 from common.process_termination import terminate_process
@@ -112,9 +113,12 @@ def repack_threads_video_task(
     fname = f"{fname_datetime}.mp4"
     unique_fdir = f"{fname_datetime}-{str(time.time()).replace('.', '')}"
     fname_popcorn = f"popcorn.xml"
+    fname_chat = f"{fname_datetime}.txt"
 
     local_source_dir = f"files/ffmpeg/{unique_fdir}"
     local_source_file = f"{local_source_dir}/{fname}"
+    local_source_file_popcorn = f"{local_source_dir}/{fname_popcorn}"
+    local_source_file_chat = f"{local_source_dir}/{fname_chat}"
     remote_dir = f"{first_recording.type_recording.name}/{unique_fdir}"
 
     # Добавляем идентификатор задачи и процессорное имя,
@@ -145,7 +149,21 @@ def repack_threads_video_task(
 
         update_recording_tasks(Q(task_id=self.request.id), status=4)
 
+        # Форматирование чата конференции
+
+        logging.info("Start format chat file")
+        message_list_container = MessageListContainer(
+            first_recording.type_recording.name,
+            first_recording.participants,
+            first_recording.datetime_created,
+        )
+        read_xml_popcorn(local_source_file_popcorn, message_list_container)
+        save_file(local_source_file_chat, message_list_container.to_text())
+
+        os.remove(local_source_file_popcorn)
+
         # Загрузка файлов видео конференции и переписки чата в NextCloud хранилище.
+
         if not health_check(domain=settings.NEXTCLOUD_RESOURCE, schema="https"):
             logging.error(f"The \"{settings.NEXTCLOUD_RESOURCE}\" resource is not unavailable!")
             update_recording_tasks(Q(task_id=self.request.id), status=4)
@@ -157,7 +175,7 @@ def repack_threads_video_task(
             mkdir_root(oc)
 
             upload_to_nextcloud(oc, f"{remote_dir}/{fname}", local_source_file)
-            upload_to_nextcloud(oc, f"{remote_dir}/chat.xml", f"{local_source_dir}/{fname_popcorn}")
+            upload_to_nextcloud(oc, f"{remote_dir}/{fname_chat}", local_source_file_chat)
 
             logging.info("Upload successfully")
 
