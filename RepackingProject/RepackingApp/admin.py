@@ -24,7 +24,7 @@ class TypeRecordingModelAdmin(admin.ModelAdmin):
 @admin.register(RecordingModel)
 class RecordingModelAdmin(admin.ModelAdmin):
     list_filter = ("type_recording", )
-    list_display = ("record_id", "meeting_id", "datetime_created", "datetime_stopped", )
+    list_display = ("record_id", "meeting_id", "datetime_created", "datetime_stopped", "participants", )
     search_fields = ("record_id", )
 
 

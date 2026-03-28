@@ -25,6 +25,7 @@ class RecordingModel(models.Model):
     datetime_stopped = models.DateTimeField()
     type_recording = models.ForeignKey(TypeRecordingModel, on_delete=models.CASCADE)
     url = models.URLField(default='')
+    participants = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return f"RecordingModel object ({self.record_id})"

@@ -74,6 +74,7 @@ def parse_xml_recording(xml_recording: etree._Element) -> RecordingModel | None:
         url = xml_recording.find("playback").find("format").find("url").text.strip(' \n')
         datetime_created = from_timestamp(xml_recording.find("startTime").text)
         datetime_stopped = from_timestamp(xml_recording.find("endTime").text)
+        participants = xml_recording.find("participants").text
 
         return RecordingModel(
             record_id=record_id,
@@ -81,6 +82,7 @@ def parse_xml_recording(xml_recording: etree._Element) -> RecordingModel | None:
             url=url,
             datetime_created=datetime_created,
             datetime_stopped=datetime_stopped,
+            participants=participants
         )
     except AttributeError:
         return None
