@@ -171,8 +171,8 @@
             const li = document.createElement('li');
             li.className = 'room-item';
             li.tabIndex = 0;
-            room_name = r.name.replaceAll("&amp;","&").replaceAll("&quot;",'"');
-            li.textContent = room_name;
+            //room_name = r.name.replaceAll("&amp;","&").replaceAll("&quot;",'"');
+            li.textContent = r.name;
             li.dataset.id = r.id;
             li.onclick = () => setActiveRoom(r.id);
             roomsList.appendChild(li);

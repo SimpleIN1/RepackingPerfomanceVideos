@@ -19,6 +19,7 @@ from django.core.validators import URLValidator
 from common.manage_datetime import from_timestamp
 from common.checksum import calculate_checksum, add_checksum_to_url
 from RepackingApp.models import TypeRecordingModel, RecordingModel, RecordingTaskIdModel
+from common.html_encoding_correcting import correct_symbol_html_encoding
 
 
 def is_xml_element_or_not_none(value) -> bool:
@@ -53,7 +54,8 @@ def parse_xml_type_recording(xml_recording: etree._Element) -> TypeRecordingMode
 
     try:
         name = xml_recording.find("name").text
-        return TypeRecordingModel(name=name)
+        correct_name = correct_symbol_html_encoding(name)
+        return TypeRecordingModel(name=correct_name)
     except AttributeError:
         return None
 
@@ -299,6 +301,17 @@ def get_type_recording_by_id(id) -> TypeRecordingModel | None:
         return TypeRecordingModel.objects.get(pk=id)
     except TypeRecordingModel.DoesNotExist:
         return None
+
+
+def update_type_recording_by_record_id(type_recording_id: str, **data) -> None:
+    """
+    Обновление названия комнаты по id
+    :param type_recording_id:
+    :param data:
+    :return:
+    """
+    with transaction.atomic():
+        TypeRecordingModel.objects.filter(id=type_recording_id).update(**data)
 
 
 def update_recording_by_record_id(recording_id: str, **data) -> None:
