@@ -17,30 +17,93 @@
       <h2>Ссылки для скачивания</h2>
       <table id="downloadTable">
         <thead>
-          <tr><th>#</th><th>Название записи</th><th>Дата</th><th>Время</th><th>Размер</th><th></th></tr>
+          <tr><th>#</th><th>Название записи</th><th>Дата</th><th>Время</th><th>Размер</th><th></th><th></th></tr>
         </thead>
         <tbody>
         {% if rfiles %}
           {% for item in rfiles %}
-          <tr>
+          <tr data-check-id="dwd-{{ forloop.counter0 }}" onclick="handleItemClick(this)">
             <td>{{ forloop.counter }}</td>
             <td>{{ item.recording_task.recording.type_recording.name }}</td>
             <td>{{ item.recording_task.recording.datetime_created|date:"Y.m.d" }}</td>
             <td>{{ item.recording_task.recording.datetime_created|date:"H:i" }}</td>
             <td>{{ item.file_size|filesizeformat }}</td>
             <td>
-              <a class="btn" href="{% url 'repacking-downloads-id' id=item.id %}">Скачать</a>
+              <a id="download-{{ forloop.counter0 }}" class="btn download-b" href="{% url 'repacking-downloads-id' id=item.id %}">Скачать</a>
+            </td>
+            <td>
+              <input type="checkbox" id="dwd-{{ forloop.counter0 }}" class="record-input"
+                     style="pointer-events" data-download-id="download-{{ forloop.counter0 }}">
             </td>
           </tr>
           {% endfor %}
         {% endif %}
         </tbody>
       </table>
+
       {% if not rfiles %}
         <p style="padding-top: 10px;">Не записей для скачивания</p>
       {% endif %}
     </section>
-
+    <div class="actions">
+        <button class="btn ghost" id="selectAllBtn">Выбрать всё</button>
+        <button class="btn ghost" id="deselectAllBtn">Снять выделение</button>
+        <button class="btn" id="processDownloadBtn" type="submit">Скачать выбранные</button>
+      </div>
   </div>
+
+<script>
+  $(document).ready(function() {
+    $('.record-input').each((index, object) => {
+      $(`#${object.id}`).prop("checked", false);
+    })
+  });
+
+  $('#selectAllBtn').click(() => {
+    $('.record-input').each((index, object) => {
+      $(`#${object.id}`).prop("checked", true);
+    })
+  });
+
+  $('#deselectAllBtn').click(() => {
+    $('.record-input').each((index, object) => {
+      $(`#${object.id}`).prop("checked", false);
+    })
+  });
+
+  function handleItemClick(e) {
+    data = e.getAttribute("data-check-id");
+    dataChecked = $(`#${data}`).prop('checked');
+
+    if (!event.target.id){
+      if (dataChecked) {
+        $(`#${data}`).prop("checked", false);
+      } else {
+        $(`#${data}`).prop("checked", true);
+      }
+    }
+  }
+
+  $('#processDownloadBtn').click(() => {
+    $('.record-input').each((index, object) => {
+      setTimeout(() => {
+        checkStatus = $(`#${object.id}`).prop("checked");
+        if (checkStatus) {
+          aDownloadLinkId = object.getAttribute("data-download-id");
+
+          file = $(`#${aDownloadLinkId}`).attr("href")
+          const link = document.createElement('a');
+          link.href = file;
+          link.download = '';
+          console.log(link)
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+        }
+      }, index * 500);
+    })
+  });
+</script>
 
 {% endblock %}
