@@ -9,6 +9,9 @@ from rest_framework.permissions import BasePermission
 class SecureSignaturePermission(BasePermission):
     def has_permission(self, request, view):
         auth = request.headers.get('Authorization')
+        if not auth:
+            return False
+
         auth_split = auth.split(' ')
 
         if not len(auth_split) == 2:
