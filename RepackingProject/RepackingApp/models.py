@@ -26,6 +26,7 @@ class RecordingModel(models.Model):
     type_recording = models.ForeignKey(TypeRecordingModel, on_delete=models.CASCADE)
     url = models.URLField(default='')
     participants = models.PositiveIntegerField(default=0)
+    analytic_file = models.FilePathField(path=settings.BASE_DIR, null=True, blank=True)
 
     def __str__(self):
         return f"RecordingModel object ({self.record_id})"

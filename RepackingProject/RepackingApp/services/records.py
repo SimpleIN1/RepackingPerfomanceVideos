@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+import os.path
 import pprint
 from typing import List, Tuple, Dict
 
@@ -460,6 +462,12 @@ def upload_recordings_from_source_without_duplicate(resource):
 
     for recording_id in empty_recordings:
         type_recording = recordings[recording_id]["type_recording"]
+
+        path_save = settings.PATH_ANALYTIC_DATA.format(meeting_id=recording_id,
+                                                       dir_analytic_data=settings.DIR_ANALYTIC_DATA)
+        if os.path.exists(path_save):
+            recordings[recording_id]["recording"].analytic_file = path_save
+
         creating_data["recordings"].append((type_recording.name, recordings[recording_id]["recording"]))
 
     creating_data["type_recordings"] = [TypeRecordingModel(name=name) for name in empty_type_recordings]

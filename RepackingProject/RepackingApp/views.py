@@ -1,6 +1,9 @@
+import logging
 import os
 import json
 import random
+import pprint
+from pathlib import Path
 from http import HTTPStatus
 from urllib.parse import urlsplit
 
@@ -19,6 +22,8 @@ from django.contrib.sessions.backends.cache import SessionStore # cache
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.decorators.csrf import csrf_protect, csrf_exempt
 
+from rest_framework.views import APIView
+
 from AccountApp.services.session_service import NotifySessionService
 from AccountApp.services.user import get_user
 from CeleryApp.app import app
@@ -26,6 +31,8 @@ from CeleryApp.tasks import repack_threads_video_task, remove_dirs_task, \
     upload_processed_records, terminate_process_task
 from RepackingApp import forms
 from RepackingApp.models import RecordingModel, RecordingTaskIdModel, RecodingFileUserModel
+from RepackingApp.permissions import SecureSignaturePermission
+from RepackingApp.services.analytic_converter import covert_bbb_analytic_json_data
 from RepackingApp.services.downloads import get_recording_files, get_download_recording_files, \
     get_recording_files_for_upload
 from RepackingApp.services.order_record import create_recording_order
@@ -34,7 +41,8 @@ from RepackingApp.services.record_task import create_recording_task, delete_reco
     get_recording_tasks_left_outer_recording, get_recording_order_tasks, get_recording_order_tasks_distinct_record
 from RepackingApp.services.records import get_type_recordings, \
     get_recordings_to_dict, \
-    get_type_recordings_to_dict, get_recordings_foreinkey_type_recording, get_recordings
+    get_type_recordings_to_dict, get_recordings_foreinkey_type_recording, \
+    get_recordings, get_recording, update_recording_by_record_id
 from common.redis_conn import get_redis_connection
 
 
@@ -362,14 +370,75 @@ class DownloadFileView(LoginRequiredMixin, View):
         return FileResponse(open(rfile.file, "rb"))
 
 
-class TestAPIView(View):
+class AnalyticsCallbackAPIView(APIView):
+    permission_classes = [SecureSignaturePermission]
+
+    def get(self, request):
+        logging.info("Perform get analytic request")
+        return HttpResponse(
+            json.dumps({"success": True, }, default=str),
+            content_type='application/json',
+            status=HTTPStatus.OK
+        )
+
+    # @method_decorator(csrf_protect)
+    # @check_signature
+    def post(self, request):
+
+        meeting_id = request.data["internal_meeting_id"]
+
+        if settings.DEBUG:
+            if not request.data.get("data"):
+                return HttpResponse(
+                    json.dumps({
+                        "success": False,
+                    }, default=str),
+                    content_type='application/json',
+                    status=HTTPStatus.OK
+                )
+
+            with open(f"/home/grigoriy/PycharmProjects/RepackingPerfomanceVideos/RepackingProject/files/analytic_data-{meeting_id}.csv", "w") as f:
+                json.dump(request.data, f, indent=4)
+
+        logging.info("Perform Analytic callback")
+        Path(settings.DIR_ANALYTIC_DATA).mkdir(parents=True, exist_ok=True)
+        path_save = settings.PATH_ANALYTIC_DATA.format(meeting_id=meeting_id,
+                                                       dir_analytic_data=settings.DIR_ANALYTIC_DATA)
+        covert_bbb_analytic_json_data(request.data, path_save)
+
+        if os.path.exists(path_save):
+            logging.info("Update recording by record id")
+            update_recording_by_record_id(meeting_id, analytic_file=path_save)
+
+        return HttpResponse(
+            json.dumps({
+                "success": True,
+            }, default=str),
+            content_type='application/json',
+            status=HTTPStatus.OK
+        )
+
+
+class TestAPIView(APIView):
 
     def get(self, request):
 
         return HttpResponse(
             json.dumps({
                 "success": False,
-                "recordings": {f"test{i}": f"value{i}" for i in range(random.randint(10, 100), random.randint(140, 10000))}
+                "recordings": [{"mi": 12}, {"mi": 13}]
+            }, default=str),
+            content_type='application/json',
+            status=HTTPStatus.OK
+        )
+
+    # @method_decorator(csrf_protect)
+    def post(self, request):
+        pprint.pprint(request.data)
+
+        return HttpResponse(
+            json.dumps({
+                "success": True,
             }, default=str),
             content_type='application/json',
             status=HTTPStatus.OK

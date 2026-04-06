@@ -114,11 +114,13 @@ def repack_threads_video_task(
     unique_fdir = f"{fname_datetime}-{str(time.time()).replace('.', '')}"
     fname_popcorn = f"popcorn.xml"
     fname_chat = f"{fname_datetime}.txt"
+    fname_analytic_data = f"analytic_data_{fname_datetime}.csv"
 
     local_source_dir = f"files/ffmpeg/{unique_fdir}"
     local_source_file = f"{local_source_dir}/{fname}"
     local_source_file_popcorn = f"{local_source_dir}/{fname_popcorn}"
     local_source_file_chat = f"{local_source_dir}/{fname_chat}"
+    local_source_file_analytic_data = f"{local_source_dir}/{fname_analytic_data}"
     remote_dir = f"{first_recording.type_recording.name}/{unique_fdir}"
 
     # Добавляем идентификатор задачи и процессорное имя,
@@ -162,6 +164,10 @@ def repack_threads_video_task(
 
         os.remove(local_source_file_popcorn)
 
+        # Копирование файла аналитики
+        if first_recording.analytic_file:
+            shutil.copy(first_recording.analytic_file, f"{local_source_dir}/{fname_analytic_data}")
+
         # Загрузка файлов видео конференции и переписки чата в NextCloud хранилище.
 
         if not health_check(domain=settings.NEXTCLOUD_RESOURCE, schema="https"):
@@ -176,6 +182,7 @@ def repack_threads_video_task(
 
             upload_to_nextcloud(oc, f"{remote_dir}/{fname}", local_source_file)
             upload_to_nextcloud(oc, f"{remote_dir}/{fname_chat}", local_source_file_chat)
+            upload_to_nextcloud(oc, f"{remote_dir}/{fname_analytic_data}", local_source_file_analytic_data)
 
             logging.info("Upload successfully")
 

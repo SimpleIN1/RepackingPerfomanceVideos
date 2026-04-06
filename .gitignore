@@ -5,10 +5,6 @@
 
 **/.idea
 
-**/migrations/**
-!**/migrations
-!**/migrations/__init__.py
-
 **/static/admin
 **/static/assets/images
 **/media/
@@ -19,3 +15,4 @@ celerybeat-schedule
 
 .coverage
 **/files/ffmpeg
+**/files/analytic_dir

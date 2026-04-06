@@ -60,6 +60,7 @@ if DEBUG:
     # INSTALLED_APPS.append('silk')
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -136,23 +137,35 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'console': {
+            'format': '{asctime} {filename} {lineno} {levelname}: {message}',
+            'style': '{'
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'console',
+        },
+    },
+    'loggers': {
+        '': {
+            'level': 'INFO',
+            'handlers': ['console',],
+        },
+    },
+}
+
 # if DEBUG:
-#     # Logging query language
-    # LOGGING = {
-    #     'version': 1,
-    #     'disable_existing_loggers': False,
-    #     'handlers': {
-    #         'console': {
-    #             'class': 'logging.StreamHandler',
-    #         },
-    #     },
-    #     'loggers': {
-    #         'django.db.backends': {
-    #             'level': 'DEBUG',
-    #             'handlers': ['console'],
-    #         }
-    #     },
-    # }
+#     LOGGING["loggers"]['django.db.backends'] = {
+#         'level': 'DEBUG',
+#         'handlers': ['console'],
+#     }
 
 # Session settings
 if not "test" in sys.argv:
@@ -263,3 +276,6 @@ NEXTCLOUD_SHARE_LINK_PASSWORD = os.getenv("NEXTCLOUD_SHARE_LINK_PASSWORD")
 import base64
 with open(os.path.join(BASE_DIR, "static/assets/logo/logo45x35.png"), "rb") as f:
     IMAGE_B64 = base64.b64encode(f.read()).decode()
+
+DIR_ANALYTIC_DATA = "files/analytic_dir"
+PATH_ANALYTIC_DATA = "{dir_analytic_data}/analytic_data-{meeting_id}.csv"

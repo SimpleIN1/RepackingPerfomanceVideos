@@ -26,8 +26,12 @@ handler404 = not_found_view
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('core.urls')),
+
     path('account/', include('AccountApp.urls')),
+    path('api/account/', include('AccountApp.urls_api')),
+
     path('repacking/', include('RepackingApp.urls')),
+    path('api/repacking/', include('RepackingApp.urls_api')),
 
     path("robots.txt", TemplateView.as_view(template_name="robots.txt", content_type="text/plain")),
 ]

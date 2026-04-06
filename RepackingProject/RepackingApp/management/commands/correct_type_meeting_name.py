@@ -1,5 +1,6 @@
-from django.conf import settings
 from django.db.models import Q
+from django.conf import settings
+from django.core.cache import cache
 from django.core.management import BaseCommand, CommandError
 
 from RepackingApp.services.records import (get_type_recordings,
@@ -16,5 +17,7 @@ class Command(BaseCommand):
         for type_recording in type_recordings:
             correct_name = correct_symbol_html_encoding(type_recording.name)
             update_type_recording_by_record_id(type_recording.id, name=correct_name)
+
+        cache.delete(settings.CACHE_TYPE_RECORDINGS)
 
         self.stdout.write(self.style.SUCCESS('Type recordings are corrected names. OK.'))
