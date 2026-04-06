@@ -16,3 +16,6 @@ celerybeat-schedule
 .coverage
 **/files/ffmpeg
 **/files/analytic_dir
+
+docker-compose.test.local.yml
+docker-compose.test-dev.local.yml

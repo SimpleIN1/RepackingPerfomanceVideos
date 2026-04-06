@@ -2,10 +2,6 @@
 **/db.sqlite3
 **/celerybeat-schedule
 
-**/migrations/**
-!**/migrations
-!**/migrations/__init__.py
-
 **/static/admin
 **/static/assets/images
 **/media/
