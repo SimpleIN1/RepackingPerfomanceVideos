@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'rest_framework',
+
     'AccountApp.apps.AccountAppConfig',
     'RepackingApp.apps.RepackingAppConfig',
     'core.apps.CoreAppConfig',
@@ -166,6 +168,13 @@ LOGGING = {
 #         'level': 'DEBUG',
 #         'handlers': ['console'],
 #     }
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ]
+}
 
 # Session settings
 if not "test" in sys.argv:
