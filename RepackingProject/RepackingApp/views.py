@@ -385,20 +385,21 @@ class AnalyticsCallbackAPIView(APIView):
     # @check_signature
     def post(self, request):
 
-        meeting_id = request.data["internal_meeting_id"]
+        meeting_id = request.data.get("internal_meeting_id")
+
+        if not request.data.get("data") or not meeting_id:
+            return HttpResponse(
+                json.dumps({
+                    "success": False,
+                }, default=str),
+                content_type='application/json',
+                status=HTTPStatus.OK
+            )
 
         if settings.DEBUG:
-            if not request.data.get("data"):
-                return HttpResponse(
-                    json.dumps({
-                        "success": False,
-                    }, default=str),
-                    content_type='application/json',
-                    status=HTTPStatus.OK
-                )
-
-            with open(f"/home/grigoriy/PycharmProjects/RepackingPerfomanceVideos/RepackingProject/files/analytic_data-{meeting_id}.csv", "w") as f:
+            with open(f"files/analytic_data-{meeting_id}.csv","w") as f:
                 json.dump(request.data, f, indent=4)
+
 
         logging.info("Perform Analytic callback")
         Path(settings.DIR_ANALYTIC_DATA).mkdir(parents=True, exist_ok=True)
