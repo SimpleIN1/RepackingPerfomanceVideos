@@ -54,8 +54,8 @@ def get_webcam(data):
     if data["webcams"]:
         total_webcam = datetime.timedelta(seconds=0)
         for webcam in data["webcams"]:
-            started_on = datetime.datetime.fromtimestamp(webcam["started_on"]/1000.0)
-            stopped_on = datetime.datetime.fromtimestamp(webcam["stopped_on"]/1000.0)
+            started_on = datetime.datetime.fromtimestamp(webcam["startedOn"]/1000.0)
+            stopped_on = datetime.datetime.fromtimestamp(webcam["stoppedOn"]/1000.0)
             total_webcam += (stopped_on - started_on)
 
         total_webcam_formatted = str(total_webcam).split('.')[0]
@@ -71,7 +71,7 @@ def get_talk(data):
     if not talk:
         return "-"
 
-    total_time = talk["total_time"]
+    total_time = talk["totalTime"]
     if total_time:
         talk_formatted = datetime.timedelta(seconds=float(f"{str(total_time)[:-3]}"))
     else:
