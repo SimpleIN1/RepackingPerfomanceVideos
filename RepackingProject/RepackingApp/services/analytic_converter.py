@@ -154,15 +154,15 @@ def covert_bbb_analytic_json_data(json_data, path_save):
         logging.info("Fetching users from json")
         users = []
         for key, value in data["users"].items():
-            moderator = value["is_moderator"]
+            moderator = value["isModerator"]
             name = value["name"]
-            message_count = value["total_of_messages"]
+            message_count = value["totalOfMessages"]
             reaction_count = len(value["reactions"])
-            ext_id = value["ext_id"]
+            ext_id = value["extId"]
 
-            left_on = timestamp_to_datetime(value["int_ids"][ext_id]["left_on"])
+            left_on = timestamp_to_datetime(value["intIds"][ext_id]["leftOn"])
             left_on_formatted = format_datetime(left_on)
-            registered_on = timestamp_to_datetime(value["int_ids"][ext_id]["registered_on"])
+            registered_on = timestamp_to_datetime(value["intIds"][ext_id]["registeredOn"])
             registered_on_formatted = format_datetime(registered_on)
             duration = f"{str(left_on - registered_on).split('.')[0]}"
 
