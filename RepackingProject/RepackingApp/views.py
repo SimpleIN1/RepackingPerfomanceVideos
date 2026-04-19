@@ -32,7 +32,7 @@ from CeleryApp.tasks import repack_threads_video_task, remove_dirs_task, \
 from RepackingApp import forms
 from RepackingApp.models import RecordingModel, RecordingTaskIdModel, RecodingFileUserModel
 from RepackingApp.permissions import SecureSignaturePermission
-from RepackingApp.services.analytic_converter import covert_bbb_analytic_json_data
+from RepackingApp.services.analytic.main import AnalyticConverterFactory
 from RepackingApp.services.downloads import get_recording_files, get_download_recording_files, \
     get_recording_files_for_upload
 from RepackingApp.services.order_record import create_recording_order
@@ -397,14 +397,20 @@ class AnalyticsCallbackAPIView(APIView):
             )
 
         if settings.DEBUG:
-            with open(f"files/analytic_data-{meeting_id}.csv","w") as f:
+            with open(f"files/analytic_data-{meeting_id}.json", "w") as f:
                 json.dump(request.data, f, indent=4)
 
         logging.info("Perform Analytic callback")
         Path(settings.DIR_ANALYTIC_DATA).mkdir(parents=True, exist_ok=True)
         path_save = settings.PATH_ANALYTIC_DATA.format(meeting_id=meeting_id,
                                                        dir_analytic_data=settings.DIR_ANALYTIC_DATA)
-        covert_bbb_analytic_json_data(request.data, path_save)
+        # covert_bbb_analytic_json_data(request.data, path_save)
+
+        data = request.data["data"]
+        converter = AnalyticConverterFactory().get_converter(data)
+        c = converter(data)
+        c.execute()
+        c.save_analytic_data(path_save)
 
         if os.path.exists(path_save):
             logging.info("Update recording by record id")
