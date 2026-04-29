@@ -142,9 +142,7 @@ file .docker.env:
     ALLOWED_HOSTS=*
     INTERNAL_IPS=127.0.0.1
     CSRF_TRUSTED_ORIGINS=http://127.0.0.1:8000,http://0.0.0.0:8000
-    
-    BBB_SHARED_SECRET=bbb_shared_secret
-    BBB_RESOURCE=domain.ru
+
     BBB_URL=https://{0}/bigbluebutton/api/getRecordings?state=published
     
     EMAIL_HOST=smtp.mail.ru
@@ -153,20 +151,11 @@ file .docker.env:
     EMAIL_HOST_USER=email@mail.ru
     EMAIL_HOST_PASSWORD=password
     
-    EMAIL_SENDER=1
-    
     SCHEMA=http
     WEBSITE_NAME=project_name
     DOMAIN=localhost
     SUPPORT_EMAIL=test@mail.ru
     SUCCESS_ATTEMPT_COUNT=7
-    
-    NEXTCLOUD_RESOURCE=nextcloud.ru
-    NEXTCLOUD_USER=user
-    NEXTCLOUD_PASSWORD=password
-    NEXTCLOUD_PATH=directory
-    NEXTCLOUD_SHARE_LINK=https://nextcloud.ru/route
-    NEXTCLOUD_SHARE_LINK_PASSWORD=password
     
     CACHE_REDIS=redis://localhost:6379/0
     CELERY_RESULT_BACKEND=redis://localhost:6379/1
@@ -203,6 +192,18 @@ file docker-certbot.env
     
     EMAIL=test@mail.ru
     SERVER_NAME=localhost
+
+Dynamic params, need to add using admin panel
+    
+    BBB_SHARED_SECRET=bbb_shared_secret
+    BBB_RESOURCE=domain.ru
+
+    NEXTCLOUD_RESOURCE=nextcloud.ru
+    NEXTCLOUD_USER=user
+    NEXTCLOUD_PASSWORD=password
+    NEXTCLOUD_PATH=directory
+    NEXTCLOUD_SHARE_LINK=https://nextcloud.ru/route
+    NEXTCLOUD_SHARE_LINK_PASSWORD=password
 
 ## Docker + Certbot
 

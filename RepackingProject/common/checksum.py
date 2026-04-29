@@ -5,6 +5,7 @@ from urllib.parse import urlsplit, parse_qs, urlencode
 
 try:
     from django.conf import settings as conf, settings
+    from core import dynamic_settings
 except ModuleNotFoundError:
     pass
 
@@ -20,7 +21,7 @@ def calculate_checksum(string: str, shared_secret: str = None) -> str:
     string_b = string.encode("utf-8")
 
     if not shared_secret:
-        shared_secret = conf.BBB_SHARED_SECRET
+        shared_secret = dynamic_settings.BBB_SHARED_SECRET
     shared_secret_b = shared_secret.encode("utf-8")
 
     hb = hashlib.sha1(string_b + shared_secret_b)
@@ -40,6 +41,9 @@ def add_checksum_to_url(url: str, shared_secret: str = None) -> str | None:
     if not url:
         return None
 
+    if not shared_secret:
+        raise Exception("shared_secret is None")
+
     split_url = urlsplit(url)
     api_call = split_url.path.split('/')[-1]
 
@@ -48,9 +52,6 @@ def add_checksum_to_url(url: str, shared_secret: str = None) -> str | None:
         del parse_query["checksum"]
 
     query = urlencode(parse_query, doseq=True)
-
-    if not shared_secret:
-        shared_secret = settings.BBB_SHARED_SECRET
 
     checksum = calculate_checksum(api_call + query, shared_secret)
     query_checksum = f"checksum={checksum}"

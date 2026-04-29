@@ -1,5 +1,6 @@
 from django.conf import settings
-from django.core.management import BaseCommand, CommandError
+from core import dynamic_settings
+from django.core.management import BaseCommand
 
 from RepackingApp.services.records import (add_checksum_to_url,
                                            request_recordings,
@@ -12,8 +13,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # upload_from_source("vcs-6.ict.nsc.ru")
 
-        url = settings.BBB_URL.format(settings.BBB_RESOURCE)
-        url = add_checksum_to_url(url)
+        url = dynamic_settings.BBB_URL.format(dynamic_settings.BBB_RESOURCE)
+        url = add_checksum_to_url(url, dynamic_settings.BBB_SHARED_SECRET)
 
         response = request_recordings(url)
         if not response:

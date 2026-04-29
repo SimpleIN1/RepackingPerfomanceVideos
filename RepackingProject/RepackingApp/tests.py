@@ -28,7 +28,7 @@ from RepackingApp.services.records import request_recordings, parse_xml_recordin
 from RepackingApp.services.record_task import create_recording_task, delete_recordings_tasks, get_recording_tasks, \
     update_recording_tasks, create_recording_tasks
 from RepackingApp.validators import validate_recording_id
-from common.nextcloud import upload_to_nextcloud, oc
+from common.nextcloud import upload_to_nextcloud
 
 
 class RepackingServiceTests(TestCase):

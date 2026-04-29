@@ -2,6 +2,7 @@ from urllib.parse import urlparse
 
 from django.core.management import BaseCommand, CommandError
 
+from core import dynamic_settings
 from RepackingApp.services.records import add_checksum_to_url
 
 
@@ -22,5 +23,5 @@ class Command(BaseCommand):
         if not self.check_url(url):
             self.stdout.write(self.style.ERROR(f'URL is invalid: {url}'))
         else:
-            new_url = add_checksum_to_url(url)
+            new_url = add_checksum_to_url(url, dynamic_settings.BBB_SHARED_SECRET)
             self.stdout.write(self.style.SUCCESS(f'Checksum is added to url :{new_url}. OK.'))

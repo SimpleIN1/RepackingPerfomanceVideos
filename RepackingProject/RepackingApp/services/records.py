@@ -18,10 +18,11 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 
+from core import dynamic_settings
 from common.manage_datetime import from_timestamp
 from common.checksum import calculate_checksum, add_checksum_to_url
-from RepackingApp.models import TypeRecordingModel, RecordingModel, RecordingTaskIdModel
 from common.html_encoding_correcting import correct_symbol_html_encoding
+from RepackingApp.models import TypeRecordingModel, RecordingModel, RecordingTaskIdModel
 
 
 def is_xml_element_or_not_none(value) -> bool:
@@ -392,7 +393,7 @@ def upload_recordings_to_db(data: dict) -> Dict | None:
 
 def upload_from_source(resource):
     url = f"https://{resource}/bigbluebutton/api/getRecordings"
-    url = add_checksum_to_url(url)
+    url = add_checksum_to_url(url, dynamic_settings.BBB_SHARED_SECRET)
 
     response = request_recordings(url)
     if not response:
@@ -407,8 +408,8 @@ def upload_from_source(resource):
 
 
 def upload_recordings_and_update_fields() -> None:
-    url = "https://vcs-3.ict.sbras.ru/bigbluebutton/api/getRecordings"
-    url = add_checksum_to_url(url)
+    url = f"https://{dynamic_settings.BBB_RESOURCE}/bigbluebutton/api/getRecordings"
+    url = add_checksum_to_url(url, dynamic_settings.BBB_SHARED_SECRET)
 
     response = request_recordings(url)
 
@@ -425,8 +426,8 @@ def upload_recordings_and_update_fields() -> None:
 
 
 def upload_recordings_from_source_without_duplicate(resource):
-    url = settings.BBB_URL.format(resource)
-    url = add_checksum_to_url(url)
+    url = dynamic_settings.BBB_URL.format(resource)
+    url = add_checksum_to_url(url, dynamic_settings.BBB_SHARED_SECRET)
 
     response = request_recordings(url)
     if not response:

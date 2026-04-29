@@ -15,6 +15,7 @@ from django.core.mail import send_mail, BadHeaderError
 from AccountApp.models import UserModel
 from AccountApp.services.user import get_user
 from CeleryApp.app import app
+from core import dynamic_settings
 from RepackingApp.models import RecordingTaskIdModel
 from common.archive import Archiving, ArchivingUnpack
 from common.chat_format import MessageListContainer, read_xml_popcorn, save_file
@@ -165,13 +166,13 @@ def repack_threads_video_task(
         os.remove(local_source_file_popcorn)
 
         # Копирование файла аналитики
-        if first_recording.analytic_file:
-            shutil.copy(first_recording.analytic_file, f"{local_source_dir}/{fname_analytic_data}")
+        if first_recording.analytic_file and os.path.exists(first_recording.analytic_file):
+            shutil.copy(first_recording.analytic_file, local_source_file_analytic_data)
 
         # Загрузка файлов видео конференции и переписки чата в NextCloud хранилище.
 
-        if not health_check(domain=settings.NEXTCLOUD_RESOURCE, schema="https"):
-            logging.error(f"The \"{settings.NEXTCLOUD_RESOURCE}\" resource is not unavailable!")
+        if not health_check(domain=dynamic_settings.NEXTCLOUD_RESOURCE, schema="https"):
+            logging.error(f"The \"{dynamic_settings.NEXTCLOUD_RESOURCE}\" resource is not unavailable!")
             update_recording_tasks(Q(task_id=self.request.id), status=4)
 
         elif user.nextcloud_upload:
@@ -182,7 +183,9 @@ def repack_threads_video_task(
 
             upload_to_nextcloud(oc, f"{remote_dir}/{fname}", local_source_file)
             upload_to_nextcloud(oc, f"{remote_dir}/{fname_chat}", local_source_file_chat)
-            upload_to_nextcloud(oc, f"{remote_dir}/{fname_analytic_data}", local_source_file_analytic_data)
+
+            if os.path.exists(local_source_file_analytic_data):
+                upload_to_nextcloud(oc, f"{remote_dir}/{fname_analytic_data}", local_source_file_analytic_data)
 
             logging.info("Upload successfully")
 
@@ -241,8 +244,8 @@ def upload_processed_records(task_id, user_id, type_recording_name, local_source
     """
     user = get_user(pk=user_id)
 
-    if not health_check(domain=settings.NEXTCLOUD_RESOURCE, schema="https"):
-        logging.error(f"The \"{settings.NEXTCLOUD_RESOURCE}\" resource is not unavailable!")
+    if not health_check(domain=dynamic_settings.NEXTCLOUD_RESOURCE, schema="https"):
+        logging.error(f"The \"{dynamic_settings.NEXTCLOUD_RESOURCE}\" resource is not unavailable!")
 
     elif user.nextcloud_upload:
         try:
@@ -284,7 +287,7 @@ def upload_recordings_periodic_task():
     """
 
     logging.info("Start uploading recordings periodic task")
-    upload_recordings_from_source_without_duplicate(settings.BBB_RESOURCE)
+    upload_recordings_from_source_without_duplicate(dynamic_settings.BBB_RESOURCE)
     logging.info("Stop uploading recordings periodic task")
 
 

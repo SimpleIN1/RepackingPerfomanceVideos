@@ -3,5 +3,6 @@
 **/celerybeat-schedule
 
 **/static/admin
+**/static/rest_framework
 **/static/assets/images
 **/media/

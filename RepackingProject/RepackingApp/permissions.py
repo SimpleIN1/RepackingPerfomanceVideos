@@ -1,8 +1,6 @@
-import hmac
-import hashlib
 import jwt
 
-from django.conf import settings
+from core import dynamic_settings
 from rest_framework.permissions import BasePermission
 
 
@@ -19,7 +17,7 @@ class SecureSignaturePermission(BasePermission):
 
         token = auth_split[1]
         try:
-            jwt.decode(token, settings.BBB_SHARED_SECRET, algorithms="HS512")
+            jwt.decode(token, dynamic_settings.BBB_SHARED_SECRET, algorithms="HS512")
         except (jwt.InvalidSignatureError, jwt.ExpiredSignatureError, jwt.DecodeError):
             return False
 

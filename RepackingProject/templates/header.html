@@ -11,6 +11,11 @@
   <nav id="mainNav">
     <a id="navMain" class="" href="{% url 'repacking-records' %}">Записи конференций</a>
     <a id="navDownloads" class="" href="{% url 'repacking-downloads' %}">Ссылки для скачивания</a>
+
+    {% if user.is_superuser %}
+      <a id="navAdmin" style="color: #f23131;" class="" href="/admin/">Админ панель</a>
+    {% endif %}
+
   </nav>
   {% endif %}
 

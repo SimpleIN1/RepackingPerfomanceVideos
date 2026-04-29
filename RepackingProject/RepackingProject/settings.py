@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 import os
 import sys
+import base64
 from pathlib import Path
 
 import pytz
@@ -28,6 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("SECRET_KEY")
+FERNET_KEY = base64.urlsafe_b64encode(SECRET_KEY[-32:].encode())
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = (bool(int(os.getenv('DEBUG', 1))))
@@ -50,6 +52,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
+    'dynamic_preferences',
 
     'AccountApp.apps.AccountAppConfig',
     'RepackingApp.apps.RepackingAppConfig',
@@ -168,6 +171,7 @@ LOGGING = {
 #         'level': 'DEBUG',
 #         'handlers': ['console'],
 #     }
+#     del LOGGING["loggers"]['']
 
 
 REST_FRAMEWORK = {
@@ -177,7 +181,7 @@ REST_FRAMEWORK = {
 }
 
 # Session settings
-if not "test" in sys.argv:
+if "test" not in sys.argv:
     SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 
 # Caches
@@ -220,10 +224,10 @@ else:
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# BBB APIs settings
-BBB_SHARED_SECRET = os.getenv("BBB_SHARED_SECRET")
-BBB_RESOURCE = os.getenv("BBB_RESOURCE")
-BBB_URL = os.getenv("BBB_URL")
+# BBB APIs settings deprecated
+# BBB_SHARED_SECRET = os.getenv("BBB_SHARED_SECRET")
+# BBB_RESOURCE = os.getenv("BBB_RESOURCE")
+# BBB_URL = os.getenv("BBB_URL")
 
 # Celery settings
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")
@@ -275,14 +279,13 @@ KIND_CODE_FORGOT_PASSWORD = "forgotpassword"
 KIND_NOTIFY_PROCESSED_VIDEOS = "processedvideos"
 
 # Nextcloud mydisk settings
-NEXTCLOUD_RESOURCE = os.getenv("NEXTCLOUD_RESOURCE")
-NEXTCLOUD_USER = os.getenv("NEXTCLOUD_USER")
-NEXTCLOUD_PASSWORD = os.getenv("NEXTCLOUD_PASSWORD")
-NEXTCLOUD_PATH = os.getenv("NEXTCLOUD_PATH")
-NEXTCLOUD_SHARE_LINK = os.getenv("NEXTCLOUD_SHARE_LINK")
-NEXTCLOUD_SHARE_LINK_PASSWORD = os.getenv("NEXTCLOUD_SHARE_LINK_PASSWORD")
+# NEXTCLOUD_RESOURCE = os.getenv("NEXTCLOUD_RESOURCE")
+# NEXTCLOUD_USER = os.getenv("NEXTCLOUD_USER")
+# NEXTCLOUD_PASSWORD = os.getenv("NEXTCLOUD_PASSWORD")
+# NEXTCLOUD_PATH = os.getenv("NEXTCLOUD_PATH")
+# NEXTCLOUD_SHARE_LINK = os.getenv("NEXTCLOUD_SHARE_LINK")
+# NEXTCLOUD_SHARE_LINK_PASSWORD = os.getenv("NEXTCLOUD_SHARE_LINK_PASSWORD")
 
-import base64
 with open(os.path.join(BASE_DIR, "static/assets/logo/logo45x35.png"), "rb") as f:
     IMAGE_B64 = base64.b64encode(f.read()).decode()
 

@@ -103,10 +103,12 @@
                 {% csrf_token %}
                 <button class="btn terminate-btn" id="terminateBtn" type="submit">Отменить</button>
               </form>
+              {% if user.is_superuser %}
               <form id="uploadIDForm" method="POST" action="{% url 'repacking-api-upload-records' %}">
                 {% csrf_token %}
-                {#<button class="btn upload-btn" id="uploadBtn" type="submit">Загрузить</button>#}
+                <button class="btn upload-btn" id="uploadBtn" type="submit">Загрузить</button>
               </form>
+              {% endif %}
               <button class="btn ghost" id="selectAllBtn">Выбрать всё</button>
               <button class="btn ghost" id="deselectAllBtn">Снять выделение</button>
             </div>
