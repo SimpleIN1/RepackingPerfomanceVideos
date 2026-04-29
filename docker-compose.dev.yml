@@ -22,6 +22,7 @@ services:
     restart: always
     depends_on:
       - redis
+      - postgres
     env_file:
       - .docker.postgres.env
       - .docker.broker.env
@@ -34,7 +35,7 @@ services:
       - recording-files-volume:/usr/src/app/RepackingProject/files
       - static-volume:/usr/src/app/RepackingProject/static
 #    command: bash -c '/usr/src/app/venv/bin/python manage.py runserver 0.0.0.0:8000'
-    command: bash -c '/usr/src/app/venv/bin/gunicorn --timeout 600 --preload --workers 6 --bind 0.0.0.0:8000 RepackingProject.wsgi:application -e WSGI_FULL_INIT=1 -e WSGI_FULL_INIT_CLOSE_CONNECTIONS=1'
+    command: bash -c '/usr/src/app/venv/bin/python manage.py migrate && /usr/src/app/venv/bin/gunicorn --timeout 600 --preload --workers 6 --bind 0.0.0.0:8000 RepackingProject.wsgi:application -e WSGI_FULL_INIT=1 -e WSGI_FULL_INIT_CLOSE_CONNECTIONS=1'
 
   celery-worker-1:
     build:
@@ -43,7 +44,7 @@ services:
     restart: unless-stopped
     command: bash -c '/usr/src/app/venv/bin/celery -A CeleryApp.app worker --loglevel=debug -c $${FFMPEG_CELERY_CONCURRENCY} -Q ffmpeg_worker_queue -n ffmpeg-worker'
     depends_on:
-      - redis
+      - server
     env_file:
       - .docker.postgres.env
       - .docker.broker.env
@@ -60,7 +61,7 @@ services:
     restart: unless-stopped
     command: bash -c '/usr/src/app/venv/bin/celery -A CeleryApp.app worker --beat --loglevel=debug -c 4 -Q common_worker_queue -n common-worker'
     depends_on:
-      - redis
+      - server
     env_file:
       - .docker.postgres.env
       - .docker.broker.env
@@ -77,7 +78,7 @@ services:
     restart: unless-stopped
     command: bash -c '/usr/src/app/venv/bin/celery -A CeleryApp.app worker --loglevel=debug -c 1 -Q upload_worker_queue -n upload-worker'
     depends_on:
-      - redis
+      - server
     env_file:
       - .docker.postgres.env
       - .docker.broker.env
