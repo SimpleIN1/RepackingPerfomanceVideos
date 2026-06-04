@@ -15,7 +15,8 @@ from django.core.mail import send_mail, BadHeaderError
 from AccountApp.models import UserModel
 from AccountApp.services.user import get_user
 from CeleryApp.app import app
-from core import dynamic_settings
+# from core import dynamic_settings
+from core.dynamic_settings import global_pref
 from RepackingApp.models import RecordingTaskIdModel
 from common.archive import Archiving, ArchivingUnpack
 from common.chat_format import MessageListContainer, read_xml_popcorn, save_file
@@ -171,8 +172,8 @@ def repack_threads_video_task(
 
         # Загрузка файлов видео конференции и переписки чата в NextCloud хранилище.
 
-        if not health_check(domain=dynamic_settings.NEXTCLOUD_RESOURCE, schema="https"):
-            logging.error(f"The \"{dynamic_settings.NEXTCLOUD_RESOURCE}\" resource is not unavailable!")
+        if not health_check(domain=global_pref["nextcloud_settings__nextcloud_resource"], schema="https"):
+            logging.error(f"The \"{global_pref['nextcloud_settings__nextcloud_resource']}\" resource is not unavailable!")
             update_recording_tasks(Q(task_id=self.request.id), status=4)
 
         elif user.nextcloud_upload:
@@ -244,8 +245,8 @@ def upload_processed_records(task_id, user_id, type_recording_name, local_source
     """
     user = get_user(pk=user_id)
 
-    if not health_check(domain=dynamic_settings.NEXTCLOUD_RESOURCE, schema="https"):
-        logging.error(f"The \"{dynamic_settings.NEXTCLOUD_RESOURCE}\" resource is not unavailable!")
+    if not health_check(domain=global_pref["nextcloud_settings__nextcloud_resource"], schema="https"):
+        logging.error(f"The \"{global_pref['nextcloud_settings__nextcloud_resource']}\" resource is not unavailable!")
 
     elif user.nextcloud_upload:
         try:
@@ -287,7 +288,7 @@ def upload_recordings_periodic_task():
     """
 
     logging.info("Start uploading recordings periodic task")
-    upload_recordings_from_source_without_duplicate(dynamic_settings.BBB_RESOURCE)
+    upload_recordings_from_source_without_duplicate( global_pref["bbb_settings__bbb_resource"])
     logging.info("Stop uploading recordings periodic task")
 
 
@@ -431,3 +432,10 @@ def check_count_processed_videos_periodic_task():
     logging.info(f"Stop {order.id} check_count_processed_videos_periodic_task")
 
 ###  Session storage
+
+
+@app.task
+def upload_recordings_task():
+    logging.info("Start upload recordings by user")
+    upload_recordings_from_source_without_duplicate(global_pref["bbb_settings__bbb_resource"])
+    logging.info("Stop upload recording by user")

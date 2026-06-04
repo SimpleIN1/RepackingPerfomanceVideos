@@ -2,21 +2,24 @@ import os.path
 
 import owncloud
 from django.conf import settings
-from core import dynamic_settings
+
+from core.dynamic_serializer import EncryptedSerializer
+from core.dynamic_settings import global_pref
 
 
 def set_up():
-    oc = owncloud.Client(f'https://{dynamic_settings.NEXTCLOUD_RESOURCE}')
-    oc.login(dynamic_settings.NEXTCLOUD_USER, dynamic_settings.NEXTCLOUD_PASSWORD)
+    oc = owncloud.Client(f'https://{global_pref["nextcloud_settings__nextcloud_resource"]}')
+    fernet = EncryptedSerializer().get_fernet()
+    oc.login(global_pref["nextcloud_settings__nextcloud_user"], str(fernet.decrypt(global_pref["nextcloud_settings__nextcloud_password"]).decode()))
     return oc
 
 
 def mkdir_root(oc):
     for item in oc.list("/"):
-        if item.path == f"/{dynamic_settings.NEXTCLOUD_PATH}/":
+        if item.path == f"/{global_pref['nextcloud_settings__nextcloud_path']}/":
             break
     else:
-        oc.mkdir(dynamic_settings.NEXTCLOUD_PATH)
+        oc.mkdir(global_pref["nextcloud_settings__nextcloud_path"])
 
 
 def is_exist_dir(oc, remote_dir):
@@ -55,8 +58,8 @@ def mkdir_parent(oc, remote_dir):
 
 def upload_to_nextcloud(oc, remote_file, local_source_file):
     remote_dir = os.path.dirname(remote_file)
-    remote_dir_full = f"/{dynamic_settings.NEXTCLOUD_PATH}/{remote_dir}/"
-    remote_full = f"/{dynamic_settings.NEXTCLOUD_PATH}/{remote_file}"
+    remote_dir_full = f"/{global_pref['nextcloud_settings__nextcloud_path']}/{remote_dir}/"
+    remote_full = f"/{global_pref['nextcloud_settings__nextcloud_path']}/{remote_file}"
 
     if is_exist_dir(oc, f"{remote_full}/"):
         oc.delete(f"{remote_full}/")

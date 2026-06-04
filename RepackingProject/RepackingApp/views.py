@@ -28,7 +28,7 @@ from AccountApp.services.session_service import NotifySessionService
 from AccountApp.services.user import get_user
 from CeleryApp.app import app
 from CeleryApp.tasks import repack_threads_video_task, remove_dirs_task, \
-    upload_processed_records, terminate_process_task
+    upload_processed_records, terminate_process_task, upload_recordings_task
 from RepackingApp import forms
 from RepackingApp.models import RecordingModel, RecordingTaskIdModel, RecodingFileUserModel
 from RepackingApp.permissions import SecureSignaturePermission
@@ -294,6 +294,24 @@ class UploadRecordingsAPIView(LoginRequiredMixin, View):
                                            request.user.id,
                                            rfv.recording_task.recording.type_recording.name,
                                            rfv.file)
+
+        return HttpResponse(
+            json.dumps({
+                "success": True
+            }, default=str),
+            content_type='application/json',
+            status=HTTPStatus.OK
+        )
+
+
+class DownloadRecordingsServerAPIView(LoginRequiredMixin, View):
+    form_class = forms.ProcessRecordingsForm
+
+    @method_decorator(csrf_protect)
+    def post(self, request):
+        context = {}
+
+        upload_recordings_task.delay()
 
         return HttpResponse(
             json.dumps({

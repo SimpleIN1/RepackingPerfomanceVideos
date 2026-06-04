@@ -1,10 +1,11 @@
 from django.conf import settings
-from core import dynamic_settings
+from core.dynamic_settings import global_pref
 from django.core.management import BaseCommand
 
 from RepackingApp.services.records import (add_checksum_to_url,
                                            request_recordings,
                                            parse_xml_only_recordings_dict, update_recording_by_record_id)
+from core.dynamic_serializer import EncryptedSerializer
 
 
 class Command(BaseCommand):
@@ -13,8 +14,10 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # upload_from_source("vcs-6.ict.nsc.ru")
 
-        url = dynamic_settings.BBB_URL.format(dynamic_settings.BBB_RESOURCE)
-        url = add_checksum_to_url(url, dynamic_settings.BBB_SHARED_SECRET)
+        fernet = EncryptedSerializer().get_fernet()
+
+        url = global_pref["bbb_settings__bbb_url"].format(global_pref["bbb_settings__bbb_resource"])
+        url = add_checksum_to_url(url, str(fernet.decrypt(global_pref["bbb_settings__bbb_shared_secret"]).decode()))
 
         response = request_recordings(url)
         if not response:

@@ -18,7 +18,8 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 
-from core import dynamic_settings
+from core.dynamic_serializer import EncryptedSerializer
+from core.dynamic_settings import global_pref
 from common.manage_datetime import from_timestamp
 from common.checksum import calculate_checksum, add_checksum_to_url
 from common.html_encoding_correcting import correct_symbol_html_encoding
@@ -393,7 +394,9 @@ def upload_recordings_to_db(data: dict) -> Dict | None:
 
 def upload_from_source(resource):
     url = f"https://{resource}/bigbluebutton/api/getRecordings"
-    url = add_checksum_to_url(url, dynamic_settings.BBB_SHARED_SECRET)
+    fernet = EncryptedSerializer().get_fernet()
+    BBB_SHARED_SECRET = str(fernet.decrypt(global_pref["bbb_settings__bbb_shared_secret"]).decode())
+    url = add_checksum_to_url(url, BBB_SHARED_SECRET)
 
     response = request_recordings(url)
     if not response:
@@ -408,8 +411,10 @@ def upload_from_source(resource):
 
 
 def upload_recordings_and_update_fields() -> None:
-    url = f"https://{dynamic_settings.BBB_RESOURCE}/bigbluebutton/api/getRecordings"
-    url = add_checksum_to_url(url, dynamic_settings.BBB_SHARED_SECRET)
+    url = f"https://{global_pref['bbb_settings__bbb_resource']}/bigbluebutton/api/getRecordings"
+    fernet = EncryptedSerializer().get_fernet()
+    BBB_SHARED_SECRET = str(fernet.decrypt(global_pref["bbb_settings__bbb_shared_secret"]).decode())
+    url = add_checksum_to_url(url, BBB_SHARED_SECRET)
 
     response = request_recordings(url)
 
@@ -426,8 +431,10 @@ def upload_recordings_and_update_fields() -> None:
 
 
 def upload_recordings_from_source_without_duplicate(resource):
-    url = dynamic_settings.BBB_URL.format(resource)
-    url = add_checksum_to_url(url, dynamic_settings.BBB_SHARED_SECRET)
+    url = global_pref["bbb_settings__bbb_url"].format(resource)
+    fernet = EncryptedSerializer().get_fernet()
+    BBB_SHARED_SECRET = str(fernet.decrypt(global_pref["bbb_settings__bbb_shared_secret"]).decode())
+    url = add_checksum_to_url(url, BBB_SHARED_SECRET)
 
     response = request_recordings(url)
     if not response:

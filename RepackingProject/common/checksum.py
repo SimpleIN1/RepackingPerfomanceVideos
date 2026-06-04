@@ -3,9 +3,11 @@ from __future__ import annotations
 import hashlib
 from urllib.parse import urlsplit, parse_qs, urlencode
 
+from core.dynamic_serializer import EncryptedSerializer
+
 try:
     from django.conf import settings as conf, settings
-    from core import dynamic_settings
+    from core.dynamic_settings import global_pref
 except ModuleNotFoundError:
     pass
 
@@ -21,7 +23,9 @@ def calculate_checksum(string: str, shared_secret: str = None) -> str:
     string_b = string.encode("utf-8")
 
     if not shared_secret:
-        shared_secret = dynamic_settings.BBB_SHARED_SECRET
+        fernet = EncryptedSerializer().get_fernet()
+        shared_secret = str(fernet.decrypt(global_pref["bbb_settings__bbb_shared_secret"]).decode())
+
     shared_secret_b = shared_secret.encode("utf-8")
 
     hb = hashlib.sha1(string_b + shared_secret_b)

@@ -8,6 +8,7 @@ urlpatterns = [
     path("records/process/", views.ProcessRecordingsAPIView.as_view(), name="repacking-api-process-records"),
     path("records/terminate/", views.TerminateRecordingsAPIView.as_view(), name="repacking-api-terminate-records"),
     path("records/upload/", views.UploadRecordingsAPIView.as_view(), name="repacking-api-upload-records"),
+    path("records/downloadserver/", views.DownloadRecordingsServerAPIView.as_view(), name="repacking-api-download-records-server"),
 
     path("rooms/", views.RoomsAPIView.as_view(), name="repacking-api-rooms"),
 

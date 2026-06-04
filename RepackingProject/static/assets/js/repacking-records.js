@@ -177,3 +177,39 @@ document.getElementById('uploadIDForm').addEventListener('submit', e => {
       console.log('Error:', error);
   });
 });
+
+
+
+document.getElementById('uploadRecordingsForm').addEventListener('submit', e => {
+  e.preventDefault();
+
+  const form = e.target;
+  const formData = new FormData(form);
+  loadingSpinner1.style.display = 'block';
+
+  fetch(form.action, {
+    method: form.method,
+    body: formData,
+  }).then(response => response.json())
+  .then(response => {
+    console.log(response)
+    if (!response.success) {
+      loadingSpinner1.style.display = 'none';
+
+      if (response.message) {
+        showAlert(response.message.title, response.message.text, response.message.type);
+      }
+
+      return
+    }
+    loadingSpinner1.style.display = 'none';
+    showAlert('Успешно', 'Записи поставлены в очередь на загрузку', 'success');
+    sendRequestRooms();
+    renderRecords();
+  })
+  .catch(error => {
+      loadingSpinner1.style.display = 'none';
+      showAlert('Ошибка', 'Произошла ошибка попробуйте позже.', 'error');
+      console.log('Error:', error);
+  });
+});

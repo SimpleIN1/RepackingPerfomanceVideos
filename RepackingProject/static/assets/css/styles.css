@@ -29,6 +29,7 @@
     --state-processing: yellow;
 
     --logo-url: url(/static/assets/logo/logo.png);
+    --upload-recording-btn: #4a7282;
 }
 
 [data-theme="light"] {

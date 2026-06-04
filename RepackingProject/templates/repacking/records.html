@@ -108,6 +108,10 @@
                 {% csrf_token %}
                 <button class="btn upload-btn" id="uploadBtn" type="submit">Загрузить</button>
               </form>
+              <form id="uploadRecordingsForm" method="POST" action="{% url 'repacking-api-download-records-server' %}">
+                {% csrf_token %}
+                <button class="btn upload-recordings-btn" id="uploadRecordingsBtn" type="submit">Подгрузить записи</button>
+              </form>
               {% endif %}
               <button class="btn ghost" id="selectAllBtn">Выбрать всё</button>
               <button class="btn ghost" id="deselectAllBtn">Снять выделение</button>

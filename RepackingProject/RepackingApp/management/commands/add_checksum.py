@@ -2,8 +2,9 @@ from urllib.parse import urlparse
 
 from django.core.management import BaseCommand, CommandError
 
-from core import dynamic_settings
+from core.dynamic_settings import global_pref
 from RepackingApp.services.records import add_checksum_to_url
+from core.dynamic_serializer import EncryptedSerializer
 
 
 class Command(BaseCommand):
@@ -23,5 +24,6 @@ class Command(BaseCommand):
         if not self.check_url(url):
             self.stdout.write(self.style.ERROR(f'URL is invalid: {url}'))
         else:
-            new_url = add_checksum_to_url(url, dynamic_settings.BBB_SHARED_SECRET)
+            fernet = EncryptedSerializer().get_fernet()
+            new_url = add_checksum_to_url(url, str(fernet.decrypt(global_pref["bbb_settings__bbb_shared_secret"]).decode()))
             self.stdout.write(self.style.SUCCESS(f'Checksum is added to url :{new_url}. OK.'))

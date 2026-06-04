@@ -21,7 +21,11 @@ class AnalyticConverterUserV27(DefaultAnalyticConverterUser):
 
         total_time = talk["totalTime"]
         if total_time:
-            talk_formatted = timedelta(seconds=float(f"{str(total_time)[:-3]}"))
+            conv_total_time = str(total_time)[:-3]
+            if conv_total_time:
+                talk_formatted = timedelta(seconds=float(f"{conv_total_time}"))
+            else:
+                talk_formatted = "0:00:00"
         else:
             talk_formatted = "-"
 

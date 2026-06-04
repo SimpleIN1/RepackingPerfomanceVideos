@@ -113,6 +113,9 @@
     .upload-btn {
         background: var(--success);
     }
+    .upload-recordings-btn {
+        background: var(--upload-recording-btn);
+    }
     .upload-btn:hover {
         background: #04772e;
     }

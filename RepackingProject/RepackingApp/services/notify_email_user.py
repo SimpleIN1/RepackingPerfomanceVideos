@@ -4,8 +4,9 @@ from django.conf import settings
 from django.urls import reverse_lazy
 from django.contrib.sessions.backends.cache import SessionStore # cache
 
-from core import dynamic_settings
+from core.dynamic_settings import global_pref
 from common.mail.email_user import NotifyEmailUser
+from core.dynamic_serializer import EncryptedSerializer
 
 
 def send_processed_video_notify_email(nm_user: NotifyEmailUser):
@@ -29,6 +30,9 @@ def send_processed_video_notify_email(nm_user: NotifyEmailUser):
     # s.save()
 
     videos_url = f"{settings.SCHEMA}://{settings.DOMAIN}:{settings.PORT}{str(reverse_lazy(nm_user.api_call))}?session_id={s.session_key}"
+
+    fernet = EncryptedSerializer().get_fernet()
+
     context = {
         "video_count": nm_user.video_count,
         "video_count_success": nm_user.video_count-nm_user.video_count_failed-nm_user.video_count_cancelled,
@@ -36,8 +40,8 @@ def send_processed_video_notify_email(nm_user: NotifyEmailUser):
         "video_count_failed": nm_user.video_count_failed,
         "type_name": nm_user.type_name,
         "videos_url": videos_url,
-        "share_link": dynamic_settings.NEXTCLOUD_SHARE_LINK,
-        "share_link_password": dynamic_settings.NEXTCLOUD_SHARE_LINK_PASSWORD
+        "share_link": global_pref["nextcloud_settings__nextcloud_share_link"],
+        "share_link_password": str(fernet.decrypt(global_pref["nextcloud_settings__nextcloud_share_link_password"]).decode())
     }
     if settings.EMAIL_SENDER:
         nm_user.callback(nm_user.user.email, context).send()

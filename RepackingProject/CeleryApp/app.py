@@ -42,7 +42,10 @@ app.conf.task_routes = {
     },
     'CeleryApp.tasks.upload_processed_records': {
         'queue': 'upload_worker_queue'
-    }
+    },
+    'CeleryApp.tasks.upload_recordings_task': {
+        'queue': 'upload_worker_queue'
+    },
 }
 
 app.conf.beat_schedule = {
