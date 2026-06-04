@@ -232,7 +232,7 @@ Run create superuser in container:
 
 Run load staticfiles to admin panel in container:
  
-    docker-compose -f docker-compose.prod.yml exec server ../venv/bin/python manage.py collectstaic
+    docker-compose -f docker-compose.prod.yml exec server ../venv/bin/python manage.py collectstatic
 
 Run uploading recording from a resource in container:
     

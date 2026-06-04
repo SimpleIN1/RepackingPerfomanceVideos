@@ -5,8 +5,9 @@ from dynamic_preferences.registries import global_preferences_registry
 from core.dynamic_serializer import EncryptedSerializer
 
 
+global_pref = global_preferences_registry.manager()
+
 if "migrate" not in sys.argv:
-    global_pref = global_preferences_registry.manager()
 
     fernet = EncryptedSerializer().get_fernet()
 
