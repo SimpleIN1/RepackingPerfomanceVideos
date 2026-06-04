@@ -26,7 +26,7 @@ class RecordingModel(models.Model):
     type_recording = models.ForeignKey(TypeRecordingModel, on_delete=models.CASCADE)
     url = models.URLField(default='')
     participants = models.PositiveIntegerField(default=0)
-    analytic_file = models.FilePathField(path=settings.BASE_DIR, null=True, blank=True)
+    analytic_file = models.FilePathField(null=True, blank=True)
 
     def __str__(self):
         return f"RecordingModel object ({self.record_id})"
@@ -79,7 +79,7 @@ class RecordingTaskIdModel(models.Model):
 
 class RecodingFileUserModel(models.Model):
     recording_task = models.ForeignKey(RecordingTaskIdModel, to_field="task_id", on_delete=models.CASCADE)
-    file = models.FilePathField(path=settings.BASE_DIR)
+    file = models.FilePathField()
     datetime_created = models.DateTimeField(auto_now=True)
     file_size = models.PositiveIntegerField(default=0)
 
