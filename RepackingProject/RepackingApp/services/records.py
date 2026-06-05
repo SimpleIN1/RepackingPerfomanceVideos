@@ -373,14 +373,14 @@ def upload_recordings_to_db(data: dict) -> Dict | None:
         unique_fields=["name"], update_fields=["name"]
     )
 
+    if data["type_recordings"]:
+        cache.delete(settings.CACHE_TYPE_RECORDINGS)
+
     type_recording_ids = []
     for key, recording in data["recordings"]:
         type_recording = TypeRecordingModel.objects.get(name=key)
         type_recording_ids.append(type_recording.id)
         recording.type_recording = type_recording
-
-    for i in type_recording_ids:
-        cache.delete(settings.CACHE_PK_RECORDINGS.format(i))
 
     RecordingModel.objects.bulk_create(
         list(map(lambda x: x[1], data["recordings"])),
@@ -388,6 +388,9 @@ def upload_recordings_to_db(data: dict) -> Dict | None:
         ignore_conflicts=True,
         unique_fields=["record_id"], update_fields=["record_id"]
     )
+
+    for i in type_recording_ids:
+        cache.delete(settings.CACHE_PK_RECORDINGS.format(i))
 
     return data
 
@@ -460,8 +463,8 @@ def upload_recordings_from_source_without_duplicate(resource):
     type_recordings_names = set(map(lambda x: x.name, parse_xml_recordings(response)["type_recordings"]))
     empty_type_recordings = type_recordings_names.difference(type_recordings_db)
 
-    if empty_type_recordings:
-        cache.delete(settings.CACHE_TYPE_RECORDINGS)
+    # if empty_type_recordings:
+    #     cache.delete(settings.CACHE_TYPE_RECORDINGS)
 
     creating_data = {
         "recordings": [],
