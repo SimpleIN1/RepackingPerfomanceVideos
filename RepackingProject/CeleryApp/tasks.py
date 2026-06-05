@@ -166,9 +166,10 @@ def repack_threads_video_task(
 
         os.remove(local_source_file_popcorn)
 
+        logging.info(f"ananlytic file: {first_recording.analytic_file.name}")
         # Копирование файла аналитики
-        if first_recording.analytic_file and os.path.exists(first_recording.analytic_file):
-            shutil.copy(first_recording.analytic_file, local_source_file_analytic_data)
+        if first_recording.analytic_file.name and os.path.exists(first_recording.analytic_file.name):
+            shutil.copy(first_recording.analytic_file.name, local_source_file_analytic_data)
 
         # Загрузка файлов видео конференции и переписки чата в NextCloud хранилище.
 

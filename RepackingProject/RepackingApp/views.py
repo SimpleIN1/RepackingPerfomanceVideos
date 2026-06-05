@@ -382,10 +382,10 @@ class DownloadFileView(LoginRequiredMixin, View):
     def get(self, request, id):
         rfile = get_object_or_404(RecodingFileUserModel, pk=id)
 
-        if not os.path.exists(rfile.file):
+        if not os.path.exists(rfile.file.name):
             return redirect("not-found")
 
-        return FileResponse(open(rfile.file, "rb"))
+        return FileResponse(open(rfile.file.name, "rb"))
 
 
 class AnalyticsCallbackAPIView(APIView):
