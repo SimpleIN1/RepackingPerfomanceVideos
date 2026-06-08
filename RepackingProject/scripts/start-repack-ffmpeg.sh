@@ -75,6 +75,19 @@ if [[ "$http_status_deskshare" -ne 200 ]]; then
   echo "DESKSHARE is empty"
   ffmpeg -i $WEBCAMS -y -c:v h264 -crf 21 -c:a aac -q:a 0.8 $OUT
 
+
+fi
+
+# check video
+freezedetect_count=$(ffmpeg -i $WEBCAMS -vf "freezedetect=noise=-60dB:duration=2" -f null - > log.txt 2>&1 && grep 'freezedetect @' log.txt | wc -l)
+rm log.txt
+
+echo "Freezedetect_count $freezedetect_count"
+
+if [ "$freezedetect_count" -lt 2 ]; then
+
+    ffmpeg -i $DESKSHARE -i $WEBCAMS -y -c:v h264 -crf 21 -c:a aac -q:a 0.8 -map 0:v:0 -map 1:a:0 $OUT
+
 else
 
   FILTER_COMPLEX="[1]scale=320:-1,setpts=PTS-STARTPTS[pip];\
