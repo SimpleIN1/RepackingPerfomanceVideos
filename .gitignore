@@ -22,3 +22,5 @@ celerybeat-schedule
 
 docker-compose.test.local.yml
 docker-compose.test-dev.local.yml
+trash.txt
+main.py

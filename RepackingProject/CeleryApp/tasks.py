@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import time
 import shutil
 import logging
@@ -32,6 +33,9 @@ from RepackingApp.services.notify_email_user import send_processed_video_notify_
 from RepackingApp.services.downloads import create_recording_file, delete_recording_files, get_recording_files
 from RepackingApp.services.records import update_recording_by_record_id, \
     upload_recordings_from_source_without_duplicate, get_recordings_foreinkey_type_recording, get_type_recording_by_id
+
+
+pattern = re.compile(r"NEW_FILENAME-\|(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}\.\w+)\|-NEW_FILENAME")
 
 
 @app.task
@@ -137,17 +141,25 @@ def repack_threads_video_task(
         # Файлы сохраняются в директорию files/ffmpeg/
 
         logging.info("Start process ffmpeg")
-        subprocess.run(
+        result = subprocess.run(
             [
                 "./scripts/start-repack-ffmpeg.sh",
                 "-r", resource,
                 "-i", recording_id,
                 "-o", local_source_file
             ],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.STDOUT,
-            check=True
+            # stdout=subprocess.DEVNULL,
+            # stderr=subprocess.STDOUT,
+            check=True,
+            capture_output=True
         )
+
+        text = result.stdout.decode()
+        r_result = pattern.search(text)
+        if r_result:
+            fname = r_result.group(1)
+            local_source_file = f"{local_source_dir}/{fname}"
+            logging.info(f"Change filename - {local_source_file}")
 
         # Обновление статуса задачи на "завершена"
 

@@ -70,25 +70,42 @@ echo "WEBCAMS = $WEBCAMS"
 echo "Start repack videos FFMPEG"
 
 
-if [[ "$http_status_deskshare" -ne 200 ]]; then
+# Случай: возможно обработать вебкамеру и микро, когда отсутсвует доска
+# Случай: возможно обработать доску и микро, когда отсутсвует вебкамера
+# Случай: возможно обработать доску и вебкамеру, когда отсутсвует микро
+# Случай: возможно обработать доску, когда отсутсвует микро и вебкамера
+# Случай: возможно обработать микро, когда отсутсвует доска и вебкамера
 
-  echo "DESKSHARE is empty"
-  ffmpeg -i $WEBCAMS -y -c:v h264 -crf 21 -c:a aac -q:a 0.8 $OUT
 
-
-fi
-
-# check video
+# Проверяем видео на наличие заморозки кадров
 freezedetect_count=$(ffmpeg -i $WEBCAMS -vf "freezedetect=noise=-60dB:duration=2" -f null - > log.txt 2>&1 && grep 'freezedetect @' log.txt | wc -l)
 rm log.txt
 
 echo "Freezedetect_count $freezedetect_count"
 
-if [ "$freezedetect_count" -lt 2 ]; then
 
-    ffmpeg -i $DESKSHARE -i $WEBCAMS -y -c:v h264 -crf 21 -c:a aac -q:a 0.8 -map 0:v:0 -map 1:a:0 $OUT
+if [[ "$http_status_deskshare" -ne 200 && "$freezedetect_count" -gt 0 && "$freezedetect_count" -lt 2 ]]; then
+  # Случай: возможно обработать микро, когда отсутсвует доска и вебкамера, на выходе mp3
+
+  echo "DESKSHARE, WEBCAMS is empty, MICRO is ok"
+  ffmpeg -i $WEBCAMS -vn -c:a libmp3lame -b:a 320k "$OUTPUT_DIR/$(basename "${OUT%%.*}").mp3"
+  echo "NEW_FILENAME-|$(basename "${OUT%%.*}").mp3|-NEW_FILENAME"
+
+elif [[ "$http_status_deskshare" -ne 200 ]]; then
+  # Случай: возможно обработать вебкамеру и микро, когда отсутсвует доска
+
+  echo "DESKSHARE is empty"
+  ffmpeg -i $WEBCAMS -y -c:v h264 -crf 21 -c:a aac -q:a 0.8 $OUT
+
+elif [[ "$freezedetect_count" -gt 0 && "$freezedetect_count" -lt 2 ]]; then
+  # Случай: возможно обработать доску и микро, когда отсутсвует вебкамера
+
+  echo "MICRO is empty"
+  ffmpeg -i $DESKSHARE -i $WEBCAMS -y -c:v h264 -crf 21 -c:a aac -q:a 0.8 -map 0:v:0 -map 1:a:0 $OUT
 
 else
+    echo "DESKSHARE, WEBCAMS, MICRO is ok"
+  # Случай: возможно обработать микро, доску и вебкамеру
 
   FILTER_COMPLEX="[1]scale=320:-1,setpts=PTS-STARTPTS[pip];\
                 [0]pad=w=1630:h=ih+20:x=10:y=10:color=LightGrey,setpts=PTS-STARTPTS[slides];\
@@ -98,6 +115,5 @@ else
       -c:v h264 -crf 21 -c:a aac -q:a 0.8 $OUT
 
 fi
-
 
 echo "End repack videos FFMPEG"
