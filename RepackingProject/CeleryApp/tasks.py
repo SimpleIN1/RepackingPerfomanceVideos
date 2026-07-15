@@ -146,7 +146,7 @@ def repack_threads_video_task(
                 "./scripts/start-repack-ffmpeg.sh",
                 "-r", resource,
                 "-i", recording_id,
-                "-o", local_source_file
+                "-o", os.path.abspath(local_source_file)
             ],
             # stdout=subprocess.DEVNULL,
             # stderr=subprocess.STDOUT,

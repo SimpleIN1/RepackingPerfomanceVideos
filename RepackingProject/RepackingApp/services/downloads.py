@@ -67,7 +67,7 @@ def get_download_recording_files(filter_query: Q) -> List[RecodingFileUserModel]
               "recording_task__recording__type_recording__name",
               "recording_task__recording__datetime_created",
               "file_size") \
-        .order_by("recording_task__recording__type_recording__name")
+        .order_by("-datetime_created")
 
 
 def create_recording_file(**data) -> RecodingFileUserModel:

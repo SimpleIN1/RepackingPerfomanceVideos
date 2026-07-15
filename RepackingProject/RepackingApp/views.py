@@ -9,10 +9,11 @@ from urllib.parse import urlsplit
 
 from django.db.models import Q
 from django.conf import settings
-from django.shortcuts import render, redirect
 from django.core.cache import cache
-from django.shortcuts import get_object_or_404
 from django.views.generic import View
+from django.core.paginator import Paginator
+from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404
 from django.contrib.sessions.models import Session
 from django.http import HttpResponse, FileResponse
 from django.views.decorators.cache import cache_page
@@ -374,7 +375,13 @@ class DownloadView(View):
             user_id = request.user.id
 
         recording_files = get_download_recording_files(Q(recording_task__order__user_id=user_id))
-        context["rfiles"] = recording_files
+
+        # Пагинация ссылок на скачивание
+        p = Paginator(recording_files, 30)
+
+        page_number = request.GET.get("page", 1)
+        context["page_obj"] = p.get_page(page_number)
+
         return render(request, self.template_name, context=context)
 
 

@@ -7,7 +7,7 @@ import psutil
 from django.conf import settings
 
 
-SAFE_PATH_PATTERN = re.compile(fr'^{settings.DIR_FFMPEG_DATA}/[\d\-T]+$')
+SAFE_PATH_PATTERN = re.compile(fr'^{settings.DIR_FFMPEG_DATA}/[\d\-T:]+$')
 
 
 def terminate_process(process_name):

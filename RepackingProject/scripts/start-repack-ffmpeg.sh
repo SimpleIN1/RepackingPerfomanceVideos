@@ -40,6 +40,7 @@ POPCORN="$PREFIX/slides_new.xml"
 
 
 OUTPUT_DIR=$(dirname "$OUT")
+echo $OUTPUT_DIR
 mkdir -p $OUTPUT_DIR
 
 
@@ -78,7 +79,7 @@ echo "Start repack videos FFMPEG"
 
 
 # Проверяем видео на наличие заморозки кадров
-freezedetect_count=$(ffmpeg -i $WEBCAMS -vf "freezedetect=noise=-60dB:duration=2" -f null - > $OUTPUT_DIR/log.txt 2>&1 && grep 'freezedetect @' log.txt | wc -l)
+freezedetect_count=$(ffmpeg -i $WEBCAMS -vf "freezedetect=noise=-60dB:duration=2" -f null - > $OUTPUT_DIR/log.txt 2>&1 && grep 'freezedetect @' $OUTPUT_DIR/log.txt | wc -l)
 rm $OUTPUT_DIR/log.txt
 
 echo "Freezedetect_count $freezedetect_count"
