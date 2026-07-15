@@ -1,6 +1,13 @@
 import os
+import re
 import signal
+import logging
 import psutil
+
+from django.conf import settings
+
+
+SAFE_PATH_PATTERN = re.compile(fr'^{settings.DIR_FFMPEG_DATA}/[\d\-T]+$')
 
 
 def terminate_process(process_name):
@@ -9,16 +16,16 @@ def terminate_process(process_name):
     :param process_name:
     :return:
     """
-    # os.system(f"kill {pid}")
-    # os.system(f"kill -SIGKILL {pid}")
-    # os.system(f"killall -9 {pid}")
-    # os.system(f"pkill -P {pid}"
-    #     os.kill(pid, signal.SIGKILL)
+
+    if not SAFE_PATH_PATTERN.match(process_name):
+        logging.error(f"Небезопасное имя процесса: {process_name}")
+        return
 
     try:
-        print(os.system(f"pkill -9 -f '{process_name}'"))
+        result = os.system(f"pkill -9 -f '{process_name}'")
+        logging.info(f"Результат {result}")
     except ProcessLookupError:
-        print(f"Процесс с именем {process_name} не найден.")
+        logging.error(f"Процесс с именем {process_name} не найден.")
 
 
 def terminate_process_psutil(pid) -> None:

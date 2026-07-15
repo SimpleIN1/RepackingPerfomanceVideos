@@ -122,7 +122,7 @@ def repack_threads_video_task(
     fname_chat = f"{fname_datetime}.txt"
     fname_analytic_data = f"analytic_data_{fname_datetime}.csv"
 
-    local_source_dir = f"files/ffmpeg/{unique_fdir}"
+    local_source_dir = f"{settings.DIR_FFMPEG_DATA}/{unique_fdir}"
     local_source_file = f"{local_source_dir}/{fname}"
     local_source_file_popcorn = f"{local_source_dir}/{fname_popcorn}"
     local_source_file_chat = f"{local_source_dir}/{fname_chat}"

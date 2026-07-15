@@ -48,7 +48,7 @@ def get_recording_order_tasks_distinct_record(filter_query: Q) -> List[Recording
     :return:
     """
 
-    return RecordingTaskIdModel.objects.filter(filter_query).distinct("recording_id").only("recording_id")
+    return RecordingTaskIdModel.objects.filter(filter_query).values("recording_id").distinct()
 
 
 def update_recording_tasks(filter_query: Q, **data) -> None:

@@ -29,7 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("SECRET_KEY")
-FERNET_KEY = base64.urlsafe_b64encode(SECRET_KEY[-32:].encode())
+FERNET_KEY = base64.urlsafe_b64encode(os.getenv("FERNET_KEY").encode())
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = (bool(int(os.getenv('DEBUG', 1))))
@@ -291,3 +291,5 @@ with open(os.path.join(BASE_DIR, "static/assets/logo/logo45x35.png"), "rb") as f
 
 DIR_ANALYTIC_DATA = "files/analytic_dir"
 PATH_ANALYTIC_DATA = "{dir_analytic_data}/analytic_data-{meeting_id}.csv"
+
+DIR_FFMPEG_DATA = "files/ffmpeg"

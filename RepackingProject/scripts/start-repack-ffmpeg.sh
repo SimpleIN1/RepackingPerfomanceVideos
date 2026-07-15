@@ -78,8 +78,8 @@ echo "Start repack videos FFMPEG"
 
 
 # Проверяем видео на наличие заморозки кадров
-freezedetect_count=$(ffmpeg -i $WEBCAMS -vf "freezedetect=noise=-60dB:duration=2" -f null - > log.txt 2>&1 && grep 'freezedetect @' log.txt | wc -l)
-rm log.txt
+freezedetect_count=$(ffmpeg -i $WEBCAMS -vf "freezedetect=noise=-60dB:duration=2" -f null - > $OUTPUT_DIR/log.txt 2>&1 && grep 'freezedetect @' log.txt | wc -l)
+rm $OUTPUT_DIR/log.txt
 
 echo "Freezedetect_count $freezedetect_count"
 
