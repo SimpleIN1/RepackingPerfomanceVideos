@@ -78,14 +78,19 @@ echo "Start repack videos FFMPEG"
 # Случай: возможно обработать микро, когда отсутсвует доска и вебкамера
 
 
-# Проверяем видео на наличие заморозки кадров
-freezedetect_count=$(ffmpeg -i $WEBCAMS -vf "freezedetect=noise=-60dB:duration=2" -f null - > $OUTPUT_DIR/log.txt 2>&1 && grep 'freezedetect @' $OUTPUT_DIR/log.txt | wc -l)
-rm $OUTPUT_DIR/log.txt
+logfile="$OUTPUT_DIR/log.txt"
+echo "logfile $logfile"
 
-echo "Freezedetect_count $freezedetect_count"
+cd $OUTPUT_DIR
+ffmpeg -i $WEBCAMS -vf "select='gt(scene,0.001)',metadata=print:file=log.txt" -f null -  2>&1
+
+video_frames=$(cat $logfile | wc -l)
+rm $logfile
+
+echo "Video frames $video_frames"
 
 
-if [[ "$http_status_deskshare" -ne 200 && "$freezedetect_count" -gt 0 && "$freezedetect_count" -lt 2 ]]; then
+if [[ "$http_status_deskshare" -ne 200 && "$video_frames" -eq 0 ]]; then
   # Случай: возможно обработать микро, когда отсутсвует доска и вебкамера, на выходе mp3
 
   echo "DESKSHARE, WEBCAMS is empty, MICRO is ok"
@@ -98,10 +103,10 @@ elif [[ "$http_status_deskshare" -ne 200 ]]; then
   echo "DESKSHARE is empty"
   ffmpeg -i $WEBCAMS -y -c:v h264 -crf 21 -c:a aac -q:a 0.8 $OUT
 
-elif [[ "$freezedetect_count" -gt 0 && "$freezedetect_count" -lt 2 ]]; then
+elif [ "$video_frames" -eq 0 ]; then
   # Случай: возможно обработать доску и микро, когда отсутсвует вебкамера
 
-  echo "MICRO is empty"
+  echo "WEBCAMS is empty"
   ffmpeg -i $DESKSHARE -i $WEBCAMS -y -c:v h264 -crf 21 -c:a aac -q:a 0.8 -map 0:v:0 -map 1:a:0 $OUT
 
 else
